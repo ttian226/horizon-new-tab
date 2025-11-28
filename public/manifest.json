@@ -5,25 +5,24 @@
   "description": "Beautiful new tab page with focus tools, weather, and daily inspiration",
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "identity"
   ],
   "host_permissions": [
     "https://api.open-meteo.com/*",
-    "https://api.pexels.com/*",
-    "https://api.quotable.io/*"
+    "https://firestore.googleapis.com/*",
+    "https://*.firebaseapp.com/*",
+    "https://*.googleapis.com/*"
   ],
+  "oauth2": {
+    "client_id": "1021420058440-v4bu4lri2j02gnbk92ci04f2j0hdh2fm.apps.googleusercontent.com",
+    "scopes": [
+      "openid",
+      "email",
+      "profile"
+    ]
+  },
   "chrome_url_overrides": {
     "newtab": "index.html"
-  },
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-  "action": {
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png"
-    }
   }
 }

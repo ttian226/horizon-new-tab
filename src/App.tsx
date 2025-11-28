@@ -7,6 +7,8 @@ import {
   WALLPAPER_CATEGORIES,
 } from './services/wallpaper'
 import { User } from 'firebase/auth'
+import Clock from './components/Clock'
+import Weather from './components/Weather'
 
 function App() {
   const [user, setUser] = useState<User | null>(null)
@@ -82,7 +84,11 @@ function App() {
     <div className="app" style={backgroundStyle}>
       {wallpaperLoading && <div className="loading">Loading...</div>}
 
-      <h1>Horizon</h1>
+      {/* Weather - Top Right */}
+      <Weather />
+
+      {/* Clock & Greeting - Center */}
+      <Clock userName={user?.displayName?.split(' ')[0]} />
 
       {/* Category selector */}
       <div className="category-selector">
@@ -97,22 +103,25 @@ function App() {
         ))}
       </div>
 
-      {user ? (
-        <div className="user-info">
-          <img
-            src={user.photoURL || ''}
-            alt="avatar"
-            style={{ width: 48, height: 48, borderRadius: '50%' }}
-          />
-          <p>Welcome, {user.displayName}</p>
-          <p style={{ fontSize: '12px', opacity: 0.7 }}>{user.email}</p>
-          <button onClick={handleSignOut}>Sign Out</button>
-        </div>
-      ) : (
-        <button onClick={handleSignIn} disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign in with Google'}
-        </button>
-      )}
+      {/* User auth section */}
+      <div className="auth-section">
+        {user ? (
+          <div className="user-info">
+            <img
+              src={user.photoURL || ''}
+              alt="avatar"
+              className="user-avatar"
+            />
+            <button onClick={handleSignOut} className="auth-btn">
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <button onClick={handleSignIn} disabled={loading} className="auth-btn">
+            {loading ? 'Signing in...' : 'Sign in with Google'}
+          </button>
+        )}
+      </div>
 
       {/* Photo credit (required by Unsplash) */}
       {wallpaper && (

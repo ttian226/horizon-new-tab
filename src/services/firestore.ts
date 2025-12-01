@@ -12,6 +12,9 @@ import {
   getDocs,
   deleteDoc,
   serverTimestamp,
+  onSnapshot,
+  orderBy,
+  Unsubscribe,
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
@@ -71,25 +74,68 @@ export async function getMembership(userId: string): Promise<Membership> {
   return { isPremium: false, plan: 'free' }
 }
 
-// ============ Cloud Todos (Premium) ============
+// ============ Cloud Todos ============
 
-export async function getCloudTodos(userId: string): Promise<CloudTodoItem[]> {
+// Subscribe to todos with realtime updates
+export function subscribeTodos(
+  userId: string,
+  callback: (todos: CloudTodoItem[]) => void
+): Unsubscribe {
   const todosRef = collection(db, 'users', userId, 'todos')
-  const snapshot = await getDocs(todosRef)
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as CloudTodoItem[]
+  const q = query(todosRef, orderBy('createdAt', 'desc'))
+
+  return onSnapshot(q, (snapshot) => {
+    const todos = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate() || new Date(),
+      updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+    })) as CloudTodoItem[]
+    callback(todos)
+  })
 }
 
-export async function saveCloudTodo(userId: string, todo: Omit<CloudTodoItem, 'id'>): Promise<string> {
+// Add a new todo
+export async function addTodo(userId: string, text: string): Promise<string> {
   const todosRef = collection(db, 'users', userId, 'todos')
   const docRef = doc(todosRef)
-  await setDoc(docRef, { ...todo, updatedAt: serverTimestamp() })
+  await setDoc(docRef, {
+    text,
+    completed: false,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
   return docRef.id
 }
 
-export async function deleteCloudTodo(userId: string, todoId: string): Promise<void> {
+// Toggle todo completed status
+export async function toggleTodo(userId: string, todoId: string, completed: boolean): Promise<void> {
+  const docRef = doc(db, 'users', userId, 'todos', todoId)
+  await updateDoc(docRef, {
+    completed,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+// Delete a todo
+export async function deleteTodo(userId: string, todoId: string): Promise<void> {
   const docRef = doc(db, 'users', userId, 'todos', todoId)
   await deleteDoc(docRef)
+}
+
+// Clear all completed todos
+export async function clearCompletedTodos(userId: string): Promise<void> {
+  const todosRef = collection(db, 'users', userId, 'todos')
+  const q = query(todosRef, where('completed', '==', true))
+  const snapshot = await getDocs(q)
+
+  const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref))
+  await Promise.all(deletePromises)
+}
+
+// Get todo count for limit checking
+export async function getTodoCount(userId: string): Promise<number> {
+  const todosRef = collection(db, 'users', userId, 'todos')
+  const snapshot = await getDocs(todosRef)
+  return snapshot.size
 }

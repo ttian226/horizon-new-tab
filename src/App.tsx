@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, RefreshCw, User } from 'lucide-react'
+import { Settings, RefreshCw, User, ListTodo } from 'lucide-react'
 import { signInWithGoogle, signOut, onAuthChange } from './services/auth'
 import {
   getWallpaper,
@@ -12,6 +12,7 @@ import Clock from './components/Clock'
 import Weather from './components/Weather'
 import WeatherQuote from './components/WeatherQuote'
 import SettingsModal from './components/SettingsModal'
+import TodoApp from './components/Todo/TodoApp'
 
 function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null)
@@ -21,6 +22,7 @@ function App() {
   const [category, setCategory] = useState<WallpaperCategory>('nature')
   const [changingWallpaper, setChangingWallpaper] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isTodoOpen, setIsTodoOpen] = useState(false)
   const [weatherDescription, setWeatherDescription] = useState<string>('')
 
   const handleWeatherChange = useCallback((description: string) => {
@@ -152,13 +154,41 @@ function App() {
 
         {/* --- Footer --- */}
         <footer className="flex justify-between items-end">
-          {/* Settings Icon - Minimal */}
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="text-white/70 hover:text-white transition-opacity"
-          >
-            <Settings size={20} />
-          </button>
+          {/* Bottom Control Hub - Left */}
+          <div className="relative flex items-end gap-5">
+            {/* Settings Icon */}
+            <button
+              onClick={() => {
+                setIsSettingsOpen(true)
+                setIsTodoOpen(false)
+              }}
+              className="text-white/70 hover:text-white transition-opacity"
+            >
+              <Settings size={20} />
+            </button>
+
+            {/* Todo Icon - Only show when logged in */}
+            {user && (
+              <button
+                onClick={() => {
+                  setIsTodoOpen(!isTodoOpen)
+                  setIsSettingsOpen(false)
+                }}
+                className="text-white/70 hover:text-white transition-opacity"
+              >
+                <ListTodo size={20} />
+              </button>
+            )}
+
+            {/* Todo Panel - positioned relative to control hub */}
+            {user && (
+              <TodoApp
+                userId={user.uid}
+                isOpen={isTodoOpen}
+                onToggle={() => setIsTodoOpen(false)}
+              />
+            )}
+          </div>
 
           {/* Bottom Center Brand */}
           <div className="absolute left-1/2 -translate-x-1/2 bottom-10 md:bottom-12 opacity-50 hover:opacity-100 transition-opacity">
@@ -167,7 +197,7 @@ function App() {
             </span>
           </div>
 
-          {/* Photo Credit & Refresh - Minimal floating text */}
+          {/* Right side: Photo Credit */}
           {wallpaper && (
             <button
               onClick={handleNextWallpaper}

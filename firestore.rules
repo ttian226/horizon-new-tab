@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Wallpapers - public read access
+    match /wallpapers/{category}/photos/{photoId} {
+      allow read: if true;
+      allow write: if false; // Only Cloud Functions can write
+    }
+
+    // User data - authenticated users only
+    match /users/{userId} {
+      // User settings
+      match /settings/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // User membership
+      match /membership/{document=**} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false; // Only backend can modify membership
+      }
+
+      // User todos - with validation
+      match /todos/{todoId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+
+        // Allow delete
+        allow delete: if request.auth != null && request.auth.uid == userId;
+
+        // Create: validate text length and todo count limit
+        allow create: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 100
+          && request.resource.data.text.size() > 0;
+
+        // Update: only allow toggling completed status
+        allow update: if request.auth != null
+          && request.auth.uid == userId
+          && request.resource.data.text == resource.data.text
+          && request.resource.data.completed is bool;
+      }
+    }
+  }
+}

@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, RefreshCw, User, ListTodo } from 'lucide-react'
+import { Settings, RefreshCw, User, ListTodo, Heart } from 'lucide-react'
 import { signInWithGoogle, signOut, onAuthChange } from './services/auth'
 import { getRandomWallpaper, WallpaperData } from './services/wallpaper'
+import {
+  getNickname,
+  setNickname,
+  isFavorited,
+  addFavorite,
+  removeFavorite,
+} from './services/firestore'
 import { User as FirebaseUser } from 'firebase/auth'
 import Clock from './components/Clock'
 import Weather from './components/Weather'
@@ -18,6 +25,8 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isTodoOpen, setIsTodoOpen] = useState(false)
   const [weatherDescription, setWeatherDescription] = useState<string>('')
+  const [nickname, setNicknameState] = useState<string | null>(null)
+  const [isFavorite, setIsFavorite] = useState(false)
 
   const handleWeatherChange = useCallback((description: string) => {
     setWeatherDescription(description)
@@ -47,6 +56,26 @@ function App() {
     return () => unsubscribe()
   }, [])
 
+  // Load nickname when user changes
+  useEffect(() => {
+    if (user) {
+      getNickname(user.uid).then(setNicknameState).catch(console.error)
+    } else {
+      setNicknameState(null)
+    }
+  }, [user])
+
+  // Check if current wallpaper is favorited
+  useEffect(() => {
+    if (user && wallpaper?.unsplashId) {
+      isFavorited(user.uid, wallpaper.unsplashId)
+        .then(setIsFavorite)
+        .catch(console.error)
+    } else {
+      setIsFavorite(false)
+    }
+  }, [user, wallpaper?.unsplashId])
+
   const handleSignIn = async () => {
     setAuthLoading(true)
     try {
@@ -75,6 +104,39 @@ function App() {
       console.error('Failed to get next wallpaper:', error)
     } finally {
       setChangingWallpaper(false)
+    }
+  }
+
+  const handleNicknameChange = async (newNickname: string) => {
+    if (!user) return
+    try {
+      await setNickname(user.uid, newNickname)
+      setNicknameState(newNickname)
+    } catch (error) {
+      console.error('Failed to save nickname:', error)
+    }
+  }
+
+  const handleToggleFavorite = async () => {
+    if (!user || !wallpaper?.unsplashId) return
+
+    try {
+      if (isFavorite) {
+        await removeFavorite(user.uid, wallpaper.unsplashId)
+        setIsFavorite(false)
+      } else {
+        await addFavorite(user.uid, {
+          id: wallpaper.unsplashId,
+          imageUrl: wallpaper.imageUrl,
+          photographer: wallpaper.photographer,
+          photographerUrl: wallpaper.photographerUrl,
+          photoUrl: wallpaper.photoUrl,
+          category: wallpaper.category,
+        })
+        setIsFavorite(true)
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error)
     }
   }
 
@@ -138,7 +200,11 @@ function App() {
 
         {/* --- Main Center Content --- */}
         <main className="flex flex-col items-center justify-center">
-          <Clock userName={user?.displayName?.split(' ')[0]} />
+          <Clock
+            userName={user?.displayName?.split(' ')[0]}
+            nickname={nickname}
+            onNicknameChange={user ? handleNicknameChange : undefined}
+          />
           {weatherDescription && <WeatherQuote weatherDescription={weatherDescription} />}
         </main>
 
@@ -187,22 +253,44 @@ function App() {
             </span>
           </div>
 
-          {/* Right side: Photo Credit */}
+          {/* Right side: Favorite + Photo Credit */}
           {wallpaper && (
-            <button
-              onClick={handleNextWallpaper}
-              disabled={changingWallpaper}
-              className="group flex items-center gap-2 text-xs text-white font-light font-clock cursor-pointer transition-all hover:opacity-100 opacity-70 disabled:opacity-40"
-              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
-            >
-              <RefreshCw
-                size={12}
-                className={`transition-transform group-hover:rotate-180 duration-300 ${changingWallpaper ? 'animate-spin' : ''}`}
-              />
-              <span className="group-hover:underline underline-offset-2">
-                Photo by {wallpaper.photographer} / Unsplash
-              </span>
-            </button>
+            <div className="flex items-center gap-3">
+              {/* Favorite Heart - Only show when logged in */}
+              {user && (
+                <button
+                  onClick={handleToggleFavorite}
+                  className="transition-all duration-300 hover:scale-110 active:scale-90"
+                  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  <Heart
+                    size={16}
+                    strokeWidth={1.5}
+                    className={`transition-all duration-500 ${
+                      isFavorite
+                        ? 'fill-white/50 text-white/50 drop-shadow-[0_0_8px_rgba(251,113,133,0.5)]'
+                        : 'fill-transparent text-white/50 hover:text-white/70'
+                    }`}
+                  />
+                </button>
+              )}
+
+              {/* Photo Credit */}
+              <button
+                onClick={handleNextWallpaper}
+                disabled={changingWallpaper}
+                className="group flex items-center gap-2 text-xs text-white font-light font-clock cursor-pointer transition-all hover:opacity-100 opacity-70 disabled:opacity-40"
+                style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
+              >
+                <RefreshCw
+                  size={12}
+                  className={`transition-transform group-hover:rotate-180 duration-300 ${changingWallpaper ? 'animate-spin' : ''}`}
+                />
+                <span className="group-hover:underline underline-offset-2">
+                  Photo by {wallpaper.photographer} / Unsplash
+                </span>
+              </button>
+            </div>
           )}
         </footer>
       </div>

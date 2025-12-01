@@ -139,3 +139,68 @@ export async function getTodoCount(userId: string): Promise<number> {
   const snapshot = await getDocs(todosRef)
   return snapshot.size
 }
+
+// ============ User Profile (Nickname) ============
+
+export async function getNickname(userId: string): Promise<string | null> {
+  const docRef = doc(db, 'users', userId)
+  const docSnap = await getDoc(docRef)
+  if (docSnap.exists()) {
+    return docSnap.data().nickname || null
+  }
+  return null
+}
+
+export async function setNickname(userId: string, nickname: string): Promise<void> {
+  const docRef = doc(db, 'users', userId)
+  await setDoc(docRef, { nickname }, { merge: true })
+}
+
+// ============ Favorites (Wallpapers) ============
+
+export interface FavoriteWallpaper {
+  id: string
+  imageUrl: string
+  photographer: string
+  photographerUrl: string
+  photoUrl: string
+  category: string
+  createdAt: Date
+}
+
+// Check if wallpaper is favorited
+export async function isFavorited(userId: string, wallpaperId: string): Promise<boolean> {
+  const docRef = doc(db, 'users', userId, 'favorites', wallpaperId)
+  const docSnap = await getDoc(docRef)
+  return docSnap.exists()
+}
+
+// Add wallpaper to favorites
+export async function addFavorite(
+  userId: string,
+  wallpaper: Omit<FavoriteWallpaper, 'createdAt'>
+): Promise<void> {
+  const docRef = doc(db, 'users', userId, 'favorites', wallpaper.id)
+  await setDoc(docRef, {
+    ...wallpaper,
+    createdAt: serverTimestamp(),
+  })
+}
+
+// Remove wallpaper from favorites
+export async function removeFavorite(userId: string, wallpaperId: string): Promise<void> {
+  const docRef = doc(db, 'users', userId, 'favorites', wallpaperId)
+  await deleteDoc(docRef)
+}
+
+// Get all favorites
+export async function getFavorites(userId: string): Promise<FavoriteWallpaper[]> {
+  const favRef = collection(db, 'users', userId, 'favorites')
+  const q = query(favRef, orderBy('createdAt', 'desc'))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map((doc) => ({
+    ...doc.data(),
+    id: doc.id,
+    createdAt: doc.data().createdAt?.toDate() || new Date(),
+  })) as FavoriteWallpaper[]
+}

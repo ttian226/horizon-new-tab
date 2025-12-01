@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface ClockProps {
   userName?: string
+  nickname?: string | null
+  onNicknameChange?: (nickname: string) => void
 }
 
 function getGreeting(hour: number): string {
@@ -19,8 +21,11 @@ function formatTime(date: Date): string {
   })
 }
 
-export default function Clock({ userName }: ClockProps) {
+export default function Clock({ userName, nickname, onNicknameChange }: ClockProps) {
   const [time, setTime] = useState(new Date())
+  const [isEditing, setIsEditing] = useState(false)
+  const [editValue, setEditValue] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -30,8 +35,44 @@ export default function Clock({ userName }: ClockProps) {
     return () => clearInterval(timer)
   }, [])
 
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [isEditing])
+
   const greeting = getGreeting(time.getHours())
-  const displayName = userName || 'there'
+  // Priority: nickname > userName > 'there'
+  const displayName = nickname || userName || 'there'
+
+  const handleDoubleClick = () => {
+    if (onNicknameChange) {
+      setEditValue(displayName === 'there' ? '' : displayName)
+      setIsEditing(true)
+    }
+  }
+
+  const handleSave = () => {
+    const trimmed = editValue.trim()
+    if (trimmed && trimmed !== displayName && onNicknameChange) {
+      onNicknameChange(trimmed)
+    }
+    setIsEditing(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSave()
+    } else if (e.key === 'Escape') {
+      setIsEditing(false)
+    }
+  }
+
+  const handleBlur = () => {
+    handleSave()
+  }
 
   return (
     <div className="text-center select-none">
@@ -42,7 +83,28 @@ export default function Clock({ userName }: ClockProps) {
 
       {/* Greeting: Elegant Serif */}
       <h2 className="mt-4 text-2xl md:text-3xl font-serif-elegant italic text-white/80 drop-shadow-md font-normal">
-        {greeting}, {displayName}
+        {greeting},{' '}
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            maxLength={30}
+            className="bg-transparent border-b border-white/40 outline-none text-white/80 font-serif-elegant italic w-32 md:w-40 text-center"
+            placeholder="Your name"
+          />
+        ) : (
+          <span
+            onDoubleClick={handleDoubleClick}
+            className={onNicknameChange ? 'cursor-pointer hover:text-white transition-colors' : ''}
+            title={onNicknameChange ? 'Double-click to edit' : undefined}
+          >
+            {displayName}
+          </span>
+        )}
       </h2>
     </div>
   )

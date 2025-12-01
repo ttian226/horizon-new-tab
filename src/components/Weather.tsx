@@ -1,11 +1,21 @@
-import { useState, useEffect } from 'react'
-import { CloudSun, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { CloudSun, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, MapPin, Search } from 'lucide-react'
 
 interface WeatherData {
   temperature: number
   weatherCode: number
   city: string
 }
+
+interface WeatherSettings {
+  isAuto: boolean
+  lat: number
+  lon: number
+  cityName: string
+}
+
+const SETTINGS_KEY = 'horizon_weather_settings'
+const DEFAULT_LOCATION = { lat: 31.23, lon: 121.47, cityName: 'Shanghai' }
 
 function getWeatherIcon(code: number) {
   if (code === 0) return Sun
@@ -32,6 +42,28 @@ function getWeatherDescription(code: number): string {
   return 'Cloudy'
 }
 
+// Load settings from localStorage
+function loadSettings(): WeatherSettings {
+  try {
+    const saved = localStorage.getItem(SETTINGS_KEY)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch {
+    // ignore
+  }
+  return { isAuto: true, ...DEFAULT_LOCATION }
+}
+
+// Save settings to localStorage
+function saveSettings(settings: WeatherSettings): void {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+  } catch {
+    // ignore
+  }
+}
+
 // Reverse geocoding to get city name
 async function getCityName(lat: number, lon: number): Promise<string> {
   try {
@@ -42,21 +74,43 @@ async function getCityName(lat: number, lon: number): Promise<string> {
     if (!response.ok) return 'Unknown'
     const data = await response.json()
     const cityName = data.address?.city || data.address?.town || data.address?.village || data.address?.county || 'Unknown'
-    // Remove trailing "City", "District", etc.
     return cityName.replace(/\s*(City|District|County|Prefecture)$/i, '').trim()
   } catch {
     return 'Unknown'
   }
 }
 
-async function fetchWeather(lat: number, lon: number): Promise<WeatherData> {
-  const [weatherResponse, city] = await Promise.all([
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`),
-    getCityName(lat, lon)
-  ])
+// Search city using Open-Meteo Geocoding API
+async function searchCity(query: string): Promise<{ lat: number; lon: number; name: string } | null> {
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`
+    const response = await fetch(url)
+    if (!response.ok) return null
+    const data = await response.json()
+    if (data.results && data.results.length > 0) {
+      const result = data.results[0]
+      return {
+        lat: result.latitude,
+        lon: result.longitude,
+        name: result.name + (result.country ? `, ${result.country_code}` : '')
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+async function fetchWeather(lat: number, lon: number, cityName?: string): Promise<WeatherData> {
+  const weatherResponse = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`
+  )
 
   if (!weatherResponse.ok) throw new Error('Failed to fetch weather')
   const data = await weatherResponse.json()
+
+  // Use provided cityName or fetch it
+  const city = cityName || await getCityName(lat, lon)
 
   return {
     temperature: Math.round(data.current.temperature_2m),
@@ -65,12 +119,10 @@ async function fetchWeather(lat: number, lon: number): Promise<WeatherData> {
   }
 }
 
-const DEFAULT_LOCATION = { latitude: 31.23, longitude: 121.47 }
-
 function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      resolve(DEFAULT_LOCATION)
+      resolve({ latitude: DEFAULT_LOCATION.lat, longitude: DEFAULT_LOCATION.lon })
       return
     }
 
@@ -81,7 +133,7 @@ function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> 
           longitude: position.coords.longitude,
         })
       },
-      () => resolve(DEFAULT_LOCATION),
+      () => resolve({ latitude: DEFAULT_LOCATION.lat, longitude: DEFAULT_LOCATION.lon }),
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
     )
   })
@@ -94,30 +146,111 @@ interface WeatherProps {
 export default function Weather({ onWeatherChange }: WeatherProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
+  const [settings, setSettings] = useState<WeatherSettings>(loadSettings)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searching, setSearching] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // Load weather based on settings
+  const loadWeather = async (currentSettings: WeatherSettings) => {
+    try {
+      setLoading(true)
+      let lat: number, lon: number, cityName: string | undefined
+
+      if (currentSettings.isAuto) {
+        const pos = await getCurrentPosition()
+        lat = pos.latitude
+        lon = pos.longitude
+        cityName = undefined // Will fetch from reverse geocoding
+      } else {
+        lat = currentSettings.lat
+        lon = currentSettings.lon
+        cityName = currentSettings.cityName
+      }
+
+      const data = await fetchWeather(lat, lon, cityName)
+      setWeather(data)
+
+      // Update settings with actual city name if auto
+      if (currentSettings.isAuto && data.city !== currentSettings.cityName) {
+        const newSettings = { ...currentSettings, lat, lon, cityName: data.city }
+        setSettings(newSettings)
+        saveSettings(newSettings)
+      }
+
+      const description = getWeatherDescription(data.weatherCode)
+      onWeatherChange?.(description)
+    } catch (err) {
+      console.error('Weather error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadWeather = async () => {
-      try {
-        setLoading(true)
-        const { latitude, longitude } = await getCurrentPosition()
-        const data = await fetchWeather(latitude, longitude)
-        setWeather(data)
-        // Notify parent of weather description
-        const description = getWeatherDescription(data.weatherCode)
-        onWeatherChange?.(description)
-      } catch (err) {
-        console.error('Weather error:', err)
-      } finally {
-        setLoading(false)
+    loadWeather(settings)
+    const interval = setInterval(() => loadWeather(settings), 30 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Click outside to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
       }
     }
 
-    loadWeather()
-    const interval = setInterval(loadWeather, 30 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [onWeatherChange])
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
 
-  if (loading) {
+  // Toggle auto location
+  const handleToggleAuto = async () => {
+    const newIsAuto = !settings.isAuto
+    const newSettings = { ...settings, isAuto: newIsAuto }
+    setSettings(newSettings)
+    saveSettings(newSettings)
+
+    if (newIsAuto) {
+      await loadWeather(newSettings)
+    }
+  }
+
+  // Search city
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return
+
+    setSearching(true)
+    try {
+      const result = await searchCity(searchQuery.trim())
+      if (result) {
+        const newSettings: WeatherSettings = {
+          isAuto: false,
+          lat: result.lat,
+          lon: result.lon,
+          cityName: result.name
+        }
+        setSettings(newSettings)
+        saveSettings(newSettings)
+        setSearchQuery('')
+        await loadWeather(newSettings)
+      }
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
+
+  if (loading && !weather) {
     return (
       <div className="flex flex-col items-end text-right">
         <div className="flex items-center gap-2 text-white/60">
@@ -133,14 +266,84 @@ export default function Weather({ onWeatherChange }: WeatherProps) {
   const WeatherIcon = getWeatherIcon(weather.weatherCode)
 
   return (
-    <div className="flex flex-col items-end text-right">
-      <div className="flex items-center gap-2 text-white/90">
-        <WeatherIcon size={20} />
-        <span className="text-lg font-medium">{weather.temperature}°C</span>
-      </div>
-      <span className="text-xs text-white/60 font-medium tracking-wide uppercase mt-1">
-        {weather.city}
-      </span>
+    <div className="relative" ref={panelRef}>
+      {/* Weather Display - Clickable */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex flex-col items-end text-right rounded-lg px-3 py-2 -mr-3 -mt-2 hover:bg-white/10 transition-colors cursor-pointer"
+      >
+        <div className="flex items-center gap-2 text-white/90">
+          <WeatherIcon size={20} />
+          <span className="text-lg font-medium">{weather.temperature}°C</span>
+        </div>
+        <span className="text-xs text-white/60 font-medium tracking-wide uppercase mt-1">
+          {weather.city}
+        </span>
+      </button>
+
+      {/* Settings Panel */}
+      {isOpen && (
+        <div className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content">
+          {/* Header */}
+          <div className="p-4 border-b border-white/5">
+            <h3 className="text-sm font-medium text-white/90">Location Settings</h3>
+          </div>
+
+          {/* Auto Location Toggle */}
+          <div className="p-4 border-b border-white/5">
+            <button
+              onClick={handleToggleAuto}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <MapPin size={16} className="text-white/60" />
+                <span className="text-sm text-white/80">Auto Location</span>
+              </div>
+              <div
+                className={`w-10 h-6 rounded-full transition-colors ${
+                  settings.isAuto ? 'bg-blue-500' : 'bg-white/20'
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white mt-1 transition-transform ${
+                    settings.isAuto ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </div>
+            </button>
+          </div>
+
+          {/* Manual City Search - Only show when auto is off */}
+          {!settings.isAuto && (
+            <div className="p-4 border-b border-white/5">
+              <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
+                <Search size={14} className="text-white/40" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Enter city name..."
+                  className="flex-1 bg-transparent text-sm text-white placeholder-white/30 outline-none"
+                />
+                <button
+                  onClick={handleSearch}
+                  disabled={searching || !searchQuery.trim()}
+                  className="text-xs text-white/60 hover:text-white disabled:opacity-40 transition-colors"
+                >
+                  {searching ? '...' : 'Go'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Current Location Display */}
+          <div className="p-4">
+            <div className="text-xs text-white/40 mb-1">Current Location</div>
+            <div className="text-sm text-white/80">{weather.city}</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

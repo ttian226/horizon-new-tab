@@ -116,7 +116,7 @@ function App() {
           {/* User Avatar - Floating minimal style */}
           <div>
             {user ? (
-              <div className="p-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-sm hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer">
+              <div className="p-1 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/15 hover:scale-105 transition-all duration-300 cursor-pointer">
                 {user.photoURL ? (
                   <img
                     src={user.photoURL}

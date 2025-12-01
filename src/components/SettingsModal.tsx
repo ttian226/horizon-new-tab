@@ -7,6 +7,8 @@ interface SettingsModalProps {
   onClose: () => void
   category: WallpaperCategory
   onCategoryChange: (category: WallpaperCategory) => void
+  isLoggedIn: boolean
+  onSignOut: () => void
 }
 
 const CATEGORY_ICONS: Record<WallpaperCategory, typeof Leaf> = {
@@ -28,6 +30,8 @@ export default function SettingsModal({
   onClose,
   category,
   onCategoryChange,
+  isLoggedIn,
+  onSignOut,
 }: SettingsModalProps) {
   if (!isOpen) return null
 
@@ -75,7 +79,22 @@ export default function SettingsModal({
         {/* Divider */}
         <div className="h-px w-full bg-white/5 my-8" />
 
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          {/* Sign Out Button - Only show when logged in */}
+          {isLoggedIn ? (
+            <button
+              onClick={() => {
+                onSignOut()
+                onClose()
+              }}
+              className="text-sm text-red-400 hover:text-red-300 transition-colors"
+            >
+              Sign Out
+            </button>
+          ) : (
+            <div />
+          )}
+
           <button
             onClick={onClose}
             className="text-sm text-white/60 hover:text-white transition-colors"

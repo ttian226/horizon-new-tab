@@ -113,40 +113,29 @@ function App() {
       <div className="relative z-10 grid grid-rows-[auto_1fr_auto] h-full p-8 md:p-12">
         {/* --- Top Header --- */}
         <header className="flex justify-between items-start">
-          {/* User Section */}
-          <div className="flex items-center gap-4">
+          {/* User Avatar - Floating minimal style */}
+          <div>
             {user ? (
-              <div
-                onClick={handleSignOut}
-                className="flex items-center gap-3 backdrop-blur-md bg-black/20 border border-white/10 rounded-full pl-2 pr-5 py-2 hover:bg-black/30 transition-colors cursor-pointer group"
-              >
+              <div className="p-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-sm hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer">
                 {user.photoURL ? (
                   <img
                     src={user.photoURL}
                     alt="avatar"
-                    className="w-8 h-8 rounded-full shadow-lg"
+                    className="w-10 h-10 rounded-full"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg">
-                    <User size={16} className="text-white" />
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                    <User size={18} className="text-white" />
                   </div>
                 )}
-                <span className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
-                  Sign Out
-                </span>
               </div>
             ) : (
               <button
                 onClick={handleSignIn}
                 disabled={authLoading}
-                className="flex items-center gap-3 backdrop-blur-md bg-black/20 border border-white/10 rounded-full pl-2 pr-5 py-2 hover:bg-black/30 transition-colors cursor-pointer group disabled:opacity-50"
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all disabled:opacity-50 shadow-lg"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg">
-                  <User size={16} className="text-white" />
-                </div>
-                <span className="text-sm font-medium text-white/90 group-hover:text-white transition-colors">
-                  {authLoading ? 'Signing in...' : 'Sign In'}
-                </span>
+                <User size={18} className="text-white/80" />
               </button>
             )}
           </div>
@@ -163,13 +152,12 @@ function App() {
 
         {/* --- Footer --- */}
         <footer className="flex justify-between items-end">
-          {/* Customize Button */}
+          {/* Settings Icon - Minimal */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600/90 hover:bg-indigo-500 text-white rounded-full shadow-lg shadow-indigo-900/30 transition-all hover:scale-105 active:scale-95 text-sm font-medium backdrop-blur-sm border border-indigo-400/30"
+            className="text-white/70 hover:text-white transition-opacity"
           >
-            <Settings size={16} />
-            <span>Customize</span>
+            <Settings size={20} />
           </button>
 
           {/* Bottom Center Brand */}
@@ -205,6 +193,8 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         category={category}
         onCategoryChange={handleCategoryChange}
+        isLoggedIn={!!user}
+        onSignOut={handleSignOut}
       />
     </div>
   )

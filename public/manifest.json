@@ -13,7 +13,8 @@
     "https://nominatim.openstreetmap.org/*",
     "https://firestore.googleapis.com/*",
     "https://*.firebaseapp.com/*",
-    "https://*.googleapis.com/*"
+    "https://*.googleapis.com/*",
+    "https://*.cloudfunctions.net/*"
   ],
   "oauth2": {
     "client_id": "1021420058440-v4bu4lri2j02gnbk92ci04f2j0hdh2fm.apps.googleusercontent.com",

@@ -1,6 +1,7 @@
 /**
  * Firebase Cloud Functions for Horizon
  * Multi-category wallpaper system with scheduled updates
+ * AI-powered weather quotes using Vertex AI
  */
 
 import {setGlobalOptions} from "firebase-functions/v2";
@@ -10,6 +11,7 @@ import {defineSecret} from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
 import {initializeApp} from "firebase-admin/app";
 import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import {VertexAI} from "@google-cloud/vertexai";
 
 // Initialize Firebase Admin
 initializeApp();
@@ -228,6 +230,69 @@ export const triggerWallpaperUpdate = onRequest(
       });
     } else {
       response.status(500).json({error: "Failed to fetch any wallpapers"});
+    }
+  }
+);
+
+/**
+ * AI Weather Quote Generator using Vertex AI Gemini
+ * Generates a short, healing quote based on weather description
+ */
+export const getWeatherQuote = onRequest(
+  {
+    cors: true,
+    memory: "256MiB",
+  },
+  async (request, response) => {
+    try {
+      const {weatherDescription} = request.query;
+
+      if (!weatherDescription || typeof weatherDescription !== "string") {
+        response.status(400).json({error: "weatherDescription is required"});
+        return;
+      }
+
+      logger.info(`Generating quote for weather: ${weatherDescription}`);
+
+      // Initialize Vertex AI with project from environment
+      const vertexAI = new VertexAI({
+        project: "horizon-30aa6",
+        location: "us-central1",
+      });
+
+      // Use Gemini 1.5 Flash for speed
+      const model = vertexAI.getGenerativeModel({
+        model: "gemini-1.5-flash-001",
+      });
+
+      const systemPrompt = "You are a poetic companion. " +
+        "Generate a short (max 15 words), healing, " +
+        "and beautiful English quote based on the weather. " +
+        "Return ONLY the quote text, no quotation marks.";
+      const prompt = `${systemPrompt} Weather: ${weatherDescription}`;
+
+      const result = await model.generateContent(prompt);
+      const text = result.response.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!text) {
+        throw new Error("No response from AI");
+      }
+
+      const quote = text.trim().replace(/^["']|["']$/g, "");
+
+      logger.info(`Generated quote: ${quote}`);
+
+      response.json({
+        success: true,
+        quote,
+        weather: weatherDescription,
+      });
+    } catch (error) {
+      logger.error("Error generating weather quote:", error);
+      response.status(500).json({
+        error: "Failed to generate quote",
+        fallback: "Every weather brings its own kind of beauty.",
+      });
     }
   }
 );

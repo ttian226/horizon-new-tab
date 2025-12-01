@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Settings, RefreshCw, Camera, User } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Settings, RefreshCw, User } from 'lucide-react'
 import { signInWithGoogle, signOut, onAuthChange } from './services/auth'
 import {
   getWallpaper,
@@ -10,6 +10,7 @@ import {
 import { User as FirebaseUser } from 'firebase/auth'
 import Clock from './components/Clock'
 import Weather from './components/Weather'
+import WeatherQuote from './components/WeatherQuote'
 import SettingsModal from './components/SettingsModal'
 
 function App() {
@@ -20,6 +21,11 @@ function App() {
   const [category, setCategory] = useState<WallpaperCategory>('nature')
   const [changingWallpaper, setChangingWallpaper] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [weatherDescription, setWeatherDescription] = useState<string>('')
+
+  const handleWeatherChange = useCallback((description: string) => {
+    setWeatherDescription(description)
+  }, [])
 
   // Load wallpaper on mount and when category changes
   useEffect(() => {
@@ -146,12 +152,13 @@ function App() {
           </div>
 
           {/* Weather Section */}
-          <Weather />
+          <Weather onWeatherChange={handleWeatherChange} />
         </header>
 
         {/* --- Main Center Content --- */}
         <main className="flex flex-col items-center justify-center">
           <Clock userName={user?.displayName?.split(' ')[0]} />
+          {weatherDescription && <WeatherQuote weatherDescription={weatherDescription} />}
         </main>
 
         {/* --- Footer --- */}
@@ -172,44 +179,23 @@ function App() {
             </span>
           </div>
 
-          {/* Photo Credit & Actions */}
-          <div className="flex flex-col items-end gap-4">
-            {/* Refresh button */}
+          {/* Photo Credit & Refresh - Minimal floating text */}
+          {wallpaper && (
             <button
               onClick={handleNextWallpaper}
               disabled={changingWallpaper}
-              className="p-2.5 rounded-full bg-black/20 hover:bg-white/10 backdrop-blur-sm text-white/70 hover:text-white transition-all border border-transparent hover:border-white/20 disabled:opacity-50"
+              className="group flex items-center gap-2 text-xs text-white font-light font-clock cursor-pointer transition-all hover:opacity-100 opacity-70 disabled:opacity-40"
+              style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
             >
-              <RefreshCw size={18} className={changingWallpaper ? 'animate-spin' : ''} />
+              <RefreshCw
+                size={12}
+                className={`transition-transform group-hover:rotate-180 duration-300 ${changingWallpaper ? 'animate-spin' : ''}`}
+              />
+              <span className="group-hover:underline underline-offset-2">
+                Photo by {wallpaper.photographer} / Unsplash
+              </span>
             </button>
-
-            {/* Photo credit */}
-            {wallpaper && (
-              <div className="flex items-center gap-2 text-xs text-white/50 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5">
-                <Camera size={12} />
-                <span>
-                  Photo by{' '}
-                  <a
-                    href={wallpaper.photographerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-white/80 transition-colors"
-                  >
-                    {wallpaper.photographer}
-                  </a>
-                  {' / '}
-                  <a
-                    href={wallpaper.photoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-white/80 transition-colors"
-                  >
-                    Unsplash
-                  </a>
-                </span>
-              </div>
-            )}
-          </div>
+          )}
         </footer>
       </div>
 

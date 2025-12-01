@@ -87,7 +87,11 @@ function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> 
   })
 }
 
-export default function Weather() {
+interface WeatherProps {
+  onWeatherChange?: (description: string) => void
+}
+
+export default function Weather({ onWeatherChange }: WeatherProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -98,6 +102,9 @@ export default function Weather() {
         const { latitude, longitude } = await getCurrentPosition()
         const data = await fetchWeather(latitude, longitude)
         setWeather(data)
+        // Notify parent of weather description
+        const description = getWeatherDescription(data.weatherCode)
+        onWeatherChange?.(description)
       } catch (err) {
         console.error('Weather error:', err)
       } finally {
@@ -108,7 +115,7 @@ export default function Weather() {
     loadWeather()
     const interval = setInterval(loadWeather, 30 * 60 * 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [onWeatherChange])
 
   if (loading) {
     return (

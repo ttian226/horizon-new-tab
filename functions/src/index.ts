@@ -102,9 +102,13 @@ async function fetchPhotoForCategory(
   }
 }
 
+// Maximum wallpapers to keep per category (to control storage costs)
+const MAX_WALLPAPERS_PER_CATEGORY = 20;
+
 /**
  * Scheduled function: Update wallpapers every hour
  * Fetches 4 photos (one per category) in parallel
+ * Stores multiple wallpapers per category (up to MAX_WALLPAPERS_PER_CATEGORY)
  * Runs every hour: "0 * * * *"
  */
 export const updateWallpapers = onSchedule(
@@ -129,22 +133,44 @@ export const updateWallpapers = onSchedule(
     );
 
     // Save successful results to Firestore
-    const batch = db.batch();
     let successCount = 0;
 
-    results.forEach((wallpaper) => {
+    for (const wallpaper of results) {
       if (wallpaper) {
-        // Use category as document ID for easy querying
-        const docRef = db.collection("wallpapers").doc(wallpaper.category);
-        batch.set(docRef, wallpaper);
+        // Use unsplashId as document ID to avoid duplicates
+        const docRef = db
+          .collection("wallpapers")
+          .doc(wallpaper.category)
+          .collection("photos")
+          .doc(wallpaper.unsplashId);
+
+        await docRef.set(wallpaper);
         successCount++;
+
+        // Clean up old wallpapers if exceeding limit
+        const photosRef = db
+          .collection("wallpapers")
+          .doc(wallpaper.category)
+          .collection("photos");
+
+        const snapshot = await photosRef
+          .orderBy("createdAt", "desc")
+          .offset(MAX_WALLPAPERS_PER_CATEGORY)
+          .get();
+
+        if (!snapshot.empty) {
+          const batch = db.batch();
+          snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+          await batch.commit();
+          const cat = wallpaper.category;
+          logger.info(`Cleaned up ${snapshot.size} old wallpapers from ${cat}`);
+        }
       }
-    });
+    }
 
     if (successCount > 0) {
-      await batch.commit();
       logger.info(
-        `Successfully updated ${successCount}/${CATEGORIES.length} wallpapers`
+        `Successfully added ${successCount}/${CATEGORIES.length} wallpapers`
       );
     } else {
       logger.error("Failed to fetch any wallpapers");
@@ -177,20 +203,24 @@ export const triggerWallpaperUpdate = onRequest(
     );
 
     // Save successful results to Firestore
-    const batch = db.batch();
     const savedWallpapers: WallpaperDoc[] = [];
 
-    results.forEach((wallpaper) => {
+    for (const wallpaper of results) {
       if (wallpaper) {
-        const docRef = db.collection("wallpapers").doc(wallpaper.category);
-        batch.set(docRef, wallpaper);
+        // Use unsplashId as document ID to avoid duplicates
+        const docRef = db
+          .collection("wallpapers")
+          .doc(wallpaper.category)
+          .collection("photos")
+          .doc(wallpaper.unsplashId);
+
+        await docRef.set(wallpaper);
         savedWallpapers.push(wallpaper);
       }
-    });
+    }
 
     if (savedWallpapers.length > 0) {
-      await batch.commit();
-      const msg = `Updated ${savedWallpapers.length}/${CATEGORIES.length}`;
+      const msg = `Added ${savedWallpapers.length}/${CATEGORIES.length}`;
       response.json({
         success: true,
         message: msg,

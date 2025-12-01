@@ -1,12 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Settings, RefreshCw, User, ListTodo } from 'lucide-react'
 import { signInWithGoogle, signOut, onAuthChange } from './services/auth'
-import {
-  getWallpaper,
-  getNextWallpaper,
-  WallpaperData,
-  WallpaperCategory,
-} from './services/wallpaper'
+import { getRandomWallpaper, WallpaperData } from './services/wallpaper'
 import { User as FirebaseUser } from 'firebase/auth'
 import Clock from './components/Clock'
 import Weather from './components/Weather'
@@ -19,7 +14,6 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false)
   const [wallpaper, setWallpaper] = useState<WallpaperData | null>(null)
   const [wallpaperLoading, setWallpaperLoading] = useState(true)
-  const [category, setCategory] = useState<WallpaperCategory>('nature')
   const [changingWallpaper, setChangingWallpaper] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isTodoOpen, setIsTodoOpen] = useState(false)
@@ -29,12 +23,12 @@ function App() {
     setWeatherDescription(description)
   }, [])
 
-  // Load wallpaper on mount and when category changes
+  // Load random wallpaper on mount
   useEffect(() => {
     const loadWallpaper = async () => {
       setWallpaperLoading(true)
       try {
-        const data = await getWallpaper(category)
+        const data = await getRandomWallpaper()
         setWallpaper(data)
       } catch (error) {
         console.error('Failed to load wallpaper:', error)
@@ -43,7 +37,7 @@ function App() {
       }
     }
     loadWallpaper()
-  }, [category])
+  }, [])
 
   // Auth state listener
   useEffect(() => {
@@ -75,17 +69,13 @@ function App() {
   const handleNextWallpaper = async () => {
     setChangingWallpaper(true)
     try {
-      const next = await getNextWallpaper(category)
+      const next = await getRandomWallpaper()
       if (next) setWallpaper(next)
     } catch (error) {
       console.error('Failed to get next wallpaper:', error)
     } finally {
       setChangingWallpaper(false)
     }
-  }
-
-  const handleCategoryChange = async (newCategory: WallpaperCategory) => {
-    setCategory(newCategory)
   }
 
   return (
@@ -221,8 +211,6 @@ function App() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        category={category}
-        onCategoryChange={handleCategoryChange}
         isLoggedIn={!!user}
         onSignOut={handleSignOut}
       />

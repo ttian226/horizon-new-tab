@@ -1,35 +1,15 @@
-import { X, Leaf, Building2, LayoutGrid, Cpu } from 'lucide-react'
-import { WallpaperCategory, WALLPAPER_CATEGORIES } from '../services/wallpaper'
-import GlassButton from './GlassButton'
+import { X } from 'lucide-react'
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
-  category: WallpaperCategory
-  onCategoryChange: (category: WallpaperCategory) => void
   isLoggedIn: boolean
   onSignOut: () => void
-}
-
-const CATEGORY_ICONS: Record<WallpaperCategory, typeof Leaf> = {
-  nature: Leaf,
-  architecture: Building2,
-  minimalist: LayoutGrid,
-  technology: Cpu,
-}
-
-const CATEGORY_LABELS: Record<WallpaperCategory, string> = {
-  nature: 'Nature',
-  architecture: 'Architecture',
-  minimalist: 'Minimalist',
-  technology: 'Technology',
 }
 
 export default function SettingsModal({
   isOpen,
   onClose,
-  category,
-  onCategoryChange,
   isLoggedIn,
   onSignOut,
 }: SettingsModalProps) {
@@ -47,37 +27,11 @@ export default function SettingsModal({
         </button>
 
         <h3 className="text-2xl font-serif-elegant italic text-white mb-2">
-          Display Settings
+          Settings
         </h3>
         <p className="text-sm text-white/50 mb-8 font-light">
-          Customize your daily inspiration.
+          Manage your account.
         </p>
-
-        {/* Category Selection */}
-        <div className="space-y-4">
-          <label className="text-xs uppercase tracking-widest text-white/40 font-bold ml-1 block pb-2">
-            Background Theme
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            {WALLPAPER_CATEGORIES.map((cat) => {
-              const Icon = CATEGORY_ICONS[cat]
-              return (
-                <GlassButton
-                  key={cat}
-                  active={category === cat}
-                  onClick={() => onCategoryChange(cat)}
-                  className="w-full justify-center"
-                >
-                  <Icon size={14} />
-                  {CATEGORY_LABELS[cat]}
-                </GlassButton>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="h-px w-full bg-white/5 my-8" />
 
         <div className="flex justify-between items-center">
           {/* Sign Out Button - Only show when logged in */}

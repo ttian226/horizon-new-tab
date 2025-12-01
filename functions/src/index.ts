@@ -23,8 +23,11 @@ const unsplashApiKey = defineSecret("UNSPLASH_API_KEY");
 // Global options for cost control
 setGlobalOptions({maxInstances: 10, region: "us-central1"});
 
-// Wallpaper categories
-const CATEGORIES = ["nature", "architecture", "minimalist", "technology"];
+// Wallpaper categories - curated for high-quality landscape photos
+const CATEGORIES = ["nature", "travel", "architecture", "earth"];
+
+// Image optimization parameters for 2K WebP
+const IMAGE_PARAMS = "w=2560&h=1440&fit=crop&fm=webp&q=80";
 
 // Unsplash API response types
 interface UnsplashPhoto {
@@ -88,10 +91,15 @@ async function fetchPhotoForCategory(
 
     const photo: UnsplashPhoto = await res.json();
 
+    // Build optimized image URL from raw URL
+    // raw URL format: https://images.unsplash.com/photo-xxx
+    // Add parameters for 2K WebP optimization
+    const optimizedUrl = `${photo.urls.raw}&${IMAGE_PARAMS}`;
+
     return {
       category,
-      imageUrl: photo.urls.regular,
-      fullUrl: photo.urls.full,
+      imageUrl: optimizedUrl, // 2K WebP optimized
+      fullUrl: photo.urls.full, // Keep full for reference
       photographer: photo.user.name,
       photographerUrl: photo.user.links.html,
       photoUrl: photo.links.html,
@@ -104,13 +112,10 @@ async function fetchPhotoForCategory(
   }
 }
 
-// Maximum wallpapers to keep per category (to control storage costs)
-const MAX_WALLPAPERS_PER_CATEGORY = 20;
-
 /**
  * Scheduled function: Update wallpapers every hour
  * Fetches 4 photos (one per category) in parallel
- * Stores multiple wallpapers per category (up to MAX_WALLPAPERS_PER_CATEGORY)
+ * No limit on wallpapers per category - accumulates over time
  * Runs every hour: "0 * * * *"
  */
 export const updateWallpapers = onSchedule(
@@ -148,25 +153,6 @@ export const updateWallpapers = onSchedule(
 
         await docRef.set(wallpaper);
         successCount++;
-
-        // Clean up old wallpapers if exceeding limit
-        const photosRef = db
-          .collection("wallpapers")
-          .doc(wallpaper.category)
-          .collection("photos");
-
-        const snapshot = await photosRef
-          .orderBy("createdAt", "desc")
-          .offset(MAX_WALLPAPERS_PER_CATEGORY)
-          .get();
-
-        if (!snapshot.empty) {
-          const batch = db.batch();
-          snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-          await batch.commit();
-          const cat = wallpaper.category;
-          logger.info(`Cleaned up ${snapshot.size} old wallpapers from ${cat}`);
-        }
       }
     }
 

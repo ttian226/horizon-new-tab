@@ -30,9 +30,14 @@ function App() {
   const [nickname, setNicknameState] = useState<string | null>(null)
   const [isFavorite, setIsFavorite] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' } | null>(null)
+  const [weatherRefreshTrigger, setWeatherRefreshTrigger] = useState(0)
 
   const handleWeatherChange = useCallback((description: string) => {
     setWeatherDescription(description)
+  }, [])
+
+  const handleWeatherSettingsChange = useCallback(() => {
+    setWeatherRefreshTrigger((prev) => prev + 1)
   }, [])
 
   // Load random wallpaper on mount
@@ -208,7 +213,11 @@ function App() {
           </div>
 
           {/* Weather Section */}
-          <Weather onWeatherChange={handleWeatherChange} />
+          <Weather
+            onWeatherChange={handleWeatherChange}
+            userId={user?.uid || null}
+            refreshTrigger={weatherRefreshTrigger}
+          />
         </header>
 
         {/* --- Main Center Content --- */}
@@ -315,6 +324,7 @@ function App() {
         user={user}
         onSignOut={handleSignOut}
         onSetWallpaper={setWallpaper}
+        onWeatherSettingsChange={handleWeatherSettingsChange}
       />
 
       {/* Toast Notification */}

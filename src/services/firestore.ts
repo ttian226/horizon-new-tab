@@ -18,14 +18,19 @@ import {
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
-// User settings interface
+// Weather settings interface
+export interface WeatherSettings {
+  auto: boolean
+  cityName: string
+  lat: number
+  lon: number
+}
+
+// User settings interface (stored in users/{uid}/settings field)
 export interface UserSettings {
-  name: string
-  showWeather: boolean
-  showQuote: boolean
-  showTodo: boolean
-  showFocus: boolean
-  theme: 'light' | 'dark' | 'auto'
+  weather: WeatherSettings
+  clockFormat?: '12h' | '24h'
+  showQuote?: boolean
   updatedAt?: Date
 }
 
@@ -60,18 +65,82 @@ export interface Membership {
 
 // ============ User Settings ============
 
-export async function getUserSettings(userId: string): Promise<UserSettings | null> {
-  const docRef = doc(db, 'users', userId, 'settings', 'preferences')
-  const docSnap = await getDoc(docRef)
-  return docSnap.exists() ? (docSnap.data() as UserSettings) : null
+const DEFAULT_WEATHER_SETTINGS: WeatherSettings = {
+  auto: true,
+  cityName: 'Shanghai',
+  lat: 31.23,
+  lon: 121.47,
 }
 
+const DEFAULT_USER_SETTINGS: UserSettings = {
+  weather: DEFAULT_WEATHER_SETTINGS,
+  clockFormat: '24h',
+  showQuote: true,
+}
+
+// Get user settings from users/{uid} document
+export async function getUserSettings(userId: string): Promise<UserSettings> {
+  const docRef = doc(db, 'users', userId)
+  const docSnap = await getDoc(docRef)
+
+  if (docSnap.exists()) {
+    const data = docSnap.data()
+    if (data.settings) {
+      return {
+        weather: data.settings.weather || DEFAULT_WEATHER_SETTINGS,
+        clockFormat: data.settings.clockFormat || '24h',
+        showQuote: data.settings.showQuote ?? true,
+      }
+    }
+  }
+
+  // Initialize with default settings
+  await setDoc(docRef, {
+    settings: DEFAULT_USER_SETTINGS,
+    updatedAt: serverTimestamp(),
+  }, { merge: true })
+
+  return DEFAULT_USER_SETTINGS
+}
+
+// Save user settings to users/{uid}/settings field
 export async function saveUserSettings(
   userId: string,
   settings: Partial<UserSettings>
 ): Promise<void> {
-  const docRef = doc(db, 'users', userId, 'settings', 'preferences')
-  await setDoc(docRef, { ...settings, updatedAt: serverTimestamp() }, { merge: true })
+  const docRef = doc(db, 'users', userId)
+  await updateDoc(docRef, {
+    settings: settings,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+// Update weather settings only
+export async function updateWeatherSettings(
+  userId: string,
+  weather: WeatherSettings
+): Promise<void> {
+  const docRef = doc(db, 'users', userId)
+  const docSnap = await getDoc(docRef)
+
+  if (docSnap.exists()) {
+    const currentSettings = docSnap.data().settings || DEFAULT_USER_SETTINGS
+    await updateDoc(docRef, {
+      settings: {
+        ...currentSettings,
+        weather,
+      },
+      updatedAt: serverTimestamp(),
+    })
+  } else {
+    await setDoc(docRef, {
+      settings: {
+        ...DEFAULT_USER_SETTINGS,
+        weather,
+      },
+      updatedAt: serverTimestamp(),
+    })
+  }
 }
 
 // ============ Membership ============

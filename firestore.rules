@@ -18,18 +18,23 @@ service cloud.firestore {
 
     // User data - authenticated users only
     match /users/{userId} {
-      // User profile (nickname) - allow read/write for own document with validation
+      // User profile and settings - allow read/write for own document with validation
       allow read: if isOwner(userId);
       allow write: if isOwner(userId)
+        // Validate nickname if present
         && (!request.resource.data.keys().hasAny(['nickname'])
             || (request.resource.data.nickname is string
                 && request.resource.data.nickname.size() > 0
-                && request.resource.data.nickname.size() <= 30));
-
-      // User settings
-      match /settings/{document=**} {
-        allow read, write: if isOwner(userId);
-      }
+                && request.resource.data.nickname.size() <= 30))
+        // Validate settings if present
+        && (!request.resource.data.keys().hasAny(['settings'])
+            || (request.resource.data.settings is map
+                && (!request.resource.data.settings.keys().hasAny(['weather'])
+                    || (request.resource.data.settings.weather is map
+                        && request.resource.data.settings.weather.auto is bool
+                        && request.resource.data.settings.weather.cityName is string
+                        && request.resource.data.settings.weather.lat is number
+                        && request.resource.data.settings.weather.lon is number))));
 
       // User membership
       match /membership/info {

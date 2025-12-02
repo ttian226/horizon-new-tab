@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Settings, Heart, User, MapPin, Search, Trash2 } from 'lucide-react'
 import { User as FirebaseUser } from 'firebase/auth'
-import { subscribeFavorites, removeFavorite, FavoriteWallpaper } from '../services/firestore'
+import { subscribeFavorites, removeFavorite, FavoriteWallpaper, updateWeatherSettings, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
 import { WallpaperData } from '../services/wallpaper'
 
 type TabType = 'general' | 'favorites' | 'account'
@@ -102,6 +102,20 @@ export default function SettingsModal({
     const newSettings = { ...weatherSettings, isAuto: !weatherSettings.isAuto }
     setWeatherSettings(newSettings)
     saveWeatherSettings(newSettings)
+
+    // Sync to Firestore if user is logged in
+    if (user) {
+      const firestoreSettings: FirestoreWeatherSettings = {
+        auto: newSettings.isAuto,
+        lat: newSettings.lat,
+        lon: newSettings.lon,
+        cityName: newSettings.cityName,
+      }
+      updateWeatherSettings(user.uid, firestoreSettings).catch((err) =>
+        console.error('Failed to sync weather settings to cloud:', err)
+      )
+    }
+
     onWeatherSettingsChange?.()
   }
 
@@ -121,6 +135,20 @@ export default function SettingsModal({
         setWeatherSettings(newSettings)
         saveWeatherSettings(newSettings)
         setSearchQuery('')
+
+        // Sync to Firestore if user is logged in
+        if (user) {
+          const firestoreSettings: FirestoreWeatherSettings = {
+            auto: false,
+            lat: result.lat,
+            lon: result.lon,
+            cityName: result.name,
+          }
+          updateWeatherSettings(user.uid, firestoreSettings).catch((err) =>
+            console.error('Failed to sync weather settings to cloud:', err)
+          )
+        }
+
         onWeatherSettingsChange?.()
       }
     } finally {

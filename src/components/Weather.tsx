@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { CloudSun, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, MapPin, Search } from 'lucide-react'
+import { getUserSettings, updateWeatherSettings, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
 
 interface WeatherData {
   temperature: number
@@ -141,15 +142,18 @@ function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> 
 
 interface WeatherProps {
   onWeatherChange?: (description: string) => void
+  userId?: string | null // User ID for Firestore sync
+  refreshTrigger?: number // External trigger to reload settings
 }
 
-export default function Weather({ onWeatherChange }: WeatherProps) {
+export default function Weather({ onWeatherChange, userId, refreshTrigger }: WeatherProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isOpen, setIsOpen] = useState(false)
   const [settings, setSettings] = useState<WeatherSettings>(loadSettings)
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
+  const [synced, setSynced] = useState(false) // Track if cloud settings loaded
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Load weather based on settings
@@ -177,6 +181,19 @@ export default function Weather({ onWeatherChange }: WeatherProps) {
         const newSettings = { ...currentSettings, lat, lon, cityName: data.city }
         setSettings(newSettings)
         saveSettings(newSettings)
+
+        // Sync to Firestore in background if user is logged in
+        if (userId) {
+          const firestoreSettings: FirestoreWeatherSettings = {
+            auto: newSettings.isAuto,
+            lat: newSettings.lat,
+            lon: newSettings.lon,
+            cityName: newSettings.cityName,
+          }
+          updateWeatherSettings(userId, firestoreSettings).catch((err) =>
+            console.error('Failed to sync weather settings to cloud:', err)
+          )
+        }
       }
 
       const description = getWeatherDescription(data.weatherCode)
@@ -188,11 +205,63 @@ export default function Weather({ onWeatherChange }: WeatherProps) {
     }
   }
 
+  // Initial load: Local First - load from localStorage immediately
   useEffect(() => {
     loadWeather(settings)
     const interval = setInterval(() => loadWeather(settings), 30 * 60 * 1000)
     return () => clearInterval(interval)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cloud Sync: Background sync with Firestore when user is logged in
+  useEffect(() => {
+    if (!userId || synced) return
+
+    const syncWithCloud = async () => {
+      try {
+        const userSettings = await getUserSettings(userId)
+        const cloudWeather = userSettings.weather
+
+        // Convert Firestore format to local format
+        const cloudSettings: WeatherSettings = {
+          isAuto: cloudWeather.auto,
+          lat: cloudWeather.lat,
+          lon: cloudWeather.lon,
+          cityName: cloudWeather.cityName,
+        }
+
+        // Compare with local settings - if different, use cloud settings
+        const localSettings = loadSettings()
+        const isDifferent =
+          localSettings.isAuto !== cloudSettings.isAuto ||
+          localSettings.lat !== cloudSettings.lat ||
+          localSettings.lon !== cloudSettings.lon ||
+          localSettings.cityName !== cloudSettings.cityName
+
+        if (isDifferent) {
+          // Cloud settings are different, update local
+          saveSettings(cloudSettings)
+          setSettings(cloudSettings)
+          await loadWeather(cloudSettings)
+        }
+
+        setSynced(true)
+      } catch (err) {
+        console.error('Failed to sync weather settings:', err)
+        setSynced(true) // Mark as synced to avoid retry loops
+      }
+    }
+
+    syncWithCloud()
+  }, [userId, synced]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reload settings when external trigger changes (from SettingsModal)
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      const updatedSettings = loadSettings()
+      setSettings(updatedSettings)
+      loadWeather(updatedSettings)
+    }
+  }, [refreshTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Click outside to close
   useEffect(() => {
@@ -213,7 +282,20 @@ export default function Weather({ onWeatherChange }: WeatherProps) {
     const newIsAuto = !settings.isAuto
     const newSettings = { ...settings, isAuto: newIsAuto }
     setSettings(newSettings)
-    saveSettings(newSettings)
+    saveSettings(newSettings) // Save to localStorage immediately
+
+    // Sync to Firestore in background if user is logged in
+    if (userId) {
+      const firestoreSettings: FirestoreWeatherSettings = {
+        auto: newSettings.isAuto,
+        lat: newSettings.lat,
+        lon: newSettings.lon,
+        cityName: newSettings.cityName,
+      }
+      updateWeatherSettings(userId, firestoreSettings).catch((err) =>
+        console.error('Failed to sync weather settings to cloud:', err)
+      )
+    }
 
     if (newIsAuto) {
       await loadWeather(newSettings)
@@ -235,9 +317,22 @@ export default function Weather({ onWeatherChange }: WeatherProps) {
           cityName: result.name
         }
         setSettings(newSettings)
-        saveSettings(newSettings)
+        saveSettings(newSettings) // Save to localStorage immediately
         setSearchQuery('')
         await loadWeather(newSettings)
+
+        // Sync to Firestore in background if user is logged in
+        if (userId) {
+          const firestoreSettings: FirestoreWeatherSettings = {
+            auto: false,
+            lat: result.lat,
+            lon: result.lon,
+            cityName: result.name,
+          }
+          updateWeatherSettings(userId, firestoreSettings).catch((err) =>
+            console.error('Failed to sync weather settings to cloud:', err)
+          )
+        }
       }
     } finally {
       setSearching(false)

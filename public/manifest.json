@@ -5,8 +5,7 @@
   "description": "Beautiful new tab page with focus tools, weather, and daily inspiration",
   "permissions": [
     "storage",
-    "alarms",
-    "identity"
+    "alarms"
   ],
   "host_permissions": [
     "https://api.open-meteo.com/*",
@@ -16,14 +15,6 @@
     "https://*.googleapis.com/*",
     "https://*.cloudfunctions.net/*"
   ],
-  "oauth2": {
-    "client_id": "1021420058440-v4bu4lri2j02gnbk92ci04f2j0hdh2fm.apps.googleusercontent.com",
-    "scopes": [
-      "openid",
-      "email",
-      "profile"
-    ]
-  },
   "chrome_url_overrides": {
     "newtab": "index.html"
   }

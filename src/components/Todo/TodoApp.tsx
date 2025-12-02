@@ -7,11 +7,13 @@ import {
   toggleTodo,
   deleteTodo,
   clearCompletedTodos,
+  ensureDefaultTodoList,
 } from '../../services/firestore'
 
 // Constants for limits
 const MAX_TODO_TEXT_LENGTH = 100
 const MAX_TODO_COUNT = 20
+const DEFAULT_TODO_LIST_ID = 'today'
 
 interface TodoAppProps {
   userId: string
@@ -23,20 +25,28 @@ export default function TodoApp({ userId, isOpen, onToggle }: TodoAppProps) {
   const [todos, setTodos] = useState<CloudTodoItem[]>([])
   const [newTodoText, setNewTodoText] = useState('')
   const [loading, setLoading] = useState(true)
+  const [listId, setListId] = useState<string>(DEFAULT_TODO_LIST_ID)
   const inputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  // Subscribe to todos - LAZY LOADING: only when panel is open
+  // Ensure default list exists and subscribe to todos - LAZY LOADING: only when panel is open
   useEffect(() => {
     if (!userId || !isOpen) return
 
     setLoading(true)
-    const unsubscribe = subscribeTodos(userId, (updatedTodos) => {
-      setTodos(updatedTodos)
-      setLoading(false)
-    })
 
-    return () => unsubscribe()
+    // Ensure default "Today" list exists
+    ensureDefaultTodoList(userId).then((defaultListId) => {
+      setListId(defaultListId)
+
+      // Subscribe to todos for this list
+      const unsubscribe = subscribeTodos(userId, defaultListId, (updatedTodos) => {
+        setTodos(updatedTodos)
+        setLoading(false)
+      })
+
+      return () => unsubscribe()
+    })
   }, [userId, isOpen])
 
   // Focus input when panel opens
@@ -71,7 +81,7 @@ export default function TodoApp({ userId, isOpen, onToggle }: TodoAppProps) {
     }
 
     try {
-      await addTodo(userId, text.slice(0, MAX_TODO_TEXT_LENGTH))
+      await addTodo(userId, text.slice(0, MAX_TODO_TEXT_LENGTH), listId)
       setNewTodoText('')
     } catch (error) {
       console.error('Failed to add todo:', error)
@@ -80,7 +90,7 @@ export default function TodoApp({ userId, isOpen, onToggle }: TodoAppProps) {
 
   const handleClearCompleted = async () => {
     try {
-      await clearCompletedTodos(userId)
+      await clearCompletedTodos(userId, listId)
     } catch (error) {
       console.error('Failed to clear completed todos:', error)
     }

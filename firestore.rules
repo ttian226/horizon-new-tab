@@ -1,6 +1,15 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
     // Wallpapers - public read access
     match /wallpapers/{category}/photos/{photoId} {
       allow read: if true;
@@ -9,49 +18,80 @@ service cloud.firestore {
 
     // User data - authenticated users only
     match /users/{userId} {
-      // User profile (nickname) - allow read/write for own document
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // User profile (nickname) - allow read/write for own document with validation
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+        && (!request.resource.data.keys().hasAny(['nickname'])
+            || (request.resource.data.nickname is string
+                && request.resource.data.nickname.size() > 0
+                && request.resource.data.nickname.size() <= 30));
 
       // User settings
       match /settings/{document=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
 
       // User membership
-      match /membership/{document=**} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow write: if false; // Only backend can modify membership
+      match /membership/info {
+        allow read: if isOwner(userId);
+        // Allow create only if doesn't exist (first time initialization)
+        allow create: if isOwner(userId)
+          && request.resource.data.isPro == false
+          && request.resource.data.plan == 'free'
+          && request.resource.data.maxFavorites == 9
+          && request.resource.data.maxTodoLists == 1;
+        // Only backend can update existing membership
+        allow update, delete: if false;
+      }
+
+      // Todo Lists
+      match /todolists/{listId} {
+        allow read: if isOwner(userId);
+        allow delete: if isOwner(userId) && !resource.data.isDefault; // Cannot delete default list
+        allow create: if isOwner(userId)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 50;
+        allow update: if isOwner(userId)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 50;
       }
 
       // User todos - with validation
       match /todos/{todoId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
+        allow read: if isOwner(userId);
+        allow delete: if isOwner(userId);
 
-        // Allow delete
-        allow delete: if request.auth != null && request.auth.uid == userId;
-
-        // Create: validate text length and todo count limit
-        allow create: if request.auth != null
-          && request.auth.uid == userId
+        // Create: validate text length and listId
+        allow create: if isOwner(userId)
           && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 100
-          && request.resource.data.text.size() > 0;
+          && request.resource.data.listId is string
+          && request.resource.data.completed is bool;
 
         // Update: only allow toggling completed status
-        allow update: if request.auth != null
-          && request.auth.uid == userId
+        allow update: if isOwner(userId)
           && request.resource.data.text == resource.data.text
+          && request.resource.data.listId == resource.data.listId
           && request.resource.data.completed is bool;
       }
 
-      // User favorites (wallpapers)
+      // User favorites (wallpapers) - with count limit based on membership
       match /favorites/{wallpaperId} {
-        allow read: if request.auth != null && request.auth.uid == userId;
-        allow create: if request.auth != null
-          && request.auth.uid == userId
+        allow read: if isOwner(userId);
+        allow delete: if isOwner(userId);
+
+        // Create: check membership limit (maxFavorites: 9 for free, -1 for unlimited)
+        allow create: if isOwner(userId)
           && request.resource.data.imageUrl is string
-          && request.resource.data.photographer is string;
-        allow delete: if request.auth != null && request.auth.uid == userId;
+          && request.resource.data.photographer is string
+          && request.resource.data.photographerUrl is string
+          && request.resource.data.photoUrl is string
+          && request.resource.data.category is string;
+        // Note: Count limit is enforced in client code before creation
+        // Firestore rules cannot efficiently count collection size
       }
     }
   }

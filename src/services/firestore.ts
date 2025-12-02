@@ -34,16 +34,28 @@ export interface CloudTodoItem {
   id: string
   text: string
   completed: boolean
+  listId: string // 所属分类
   createdAt: Date
   updatedAt: Date
 }
 
+// Todo List interface
+export interface TodoList {
+  id: string
+  name: string
+  order: number
+  isDefault: boolean
+  createdAt: Date
+}
+
 // Membership interface
 export interface Membership {
-  isPremium: boolean
-  plan: 'free' | 'monthly' | 'yearly'
-  expiresAt?: Date
-  subscribedAt?: Date
+  isPro: boolean
+  plan: 'free' | 'pro'
+  expiresAt?: Date | null
+  subscribedAt?: Date | null
+  maxFavorites: number // 9 for free, -1 for unlimited
+  maxTodoLists: number // 1 for free, -1 for unlimited
 }
 
 // ============ User Settings ============
@@ -64,25 +76,82 @@ export async function saveUserSettings(
 
 // ============ Membership ============
 
+const DEFAULT_FREE_MEMBERSHIP: Membership = {
+  isPro: false,
+  plan: 'free',
+  expiresAt: null,
+  subscribedAt: null,
+  maxFavorites: 9,
+  maxTodoLists: 1,
+}
+
 export async function getMembership(userId: string): Promise<Membership> {
-  const docRef = doc(db, 'users', userId, 'membership', 'status')
+  const docRef = doc(db, 'users', userId, 'membership', 'info')
   const docSnap = await getDoc(docRef)
   if (docSnap.exists()) {
-    return docSnap.data() as Membership
+    const data = docSnap.data()
+    return {
+      isPro: data.isPro ?? false,
+      plan: data.plan ?? 'free',
+      expiresAt: data.expiresAt?.toDate() ?? null,
+      subscribedAt: data.subscribedAt?.toDate() ?? null,
+      maxFavorites: data.maxFavorites ?? 9,
+      maxTodoLists: data.maxTodoLists ?? 1,
+    }
   }
-  // Default free membership
-  return { isPremium: false, plan: 'free' }
+  // Default free membership - also initialize in Firestore
+  await setDoc(docRef, {
+    ...DEFAULT_FREE_MEMBERSHIP,
+    expiresAt: null,
+    subscribedAt: null,
+  })
+  return DEFAULT_FREE_MEMBERSHIP
+}
+
+// ============ Todo Lists ============
+
+const DEFAULT_TODO_LIST_ID = 'today'
+
+// Get or create default "Today" list
+export async function ensureDefaultTodoList(userId: string): Promise<string> {
+  const docRef = doc(db, 'users', userId, 'todolists', DEFAULT_TODO_LIST_ID)
+  const docSnap = await getDoc(docRef)
+
+  if (!docSnap.exists()) {
+    await setDoc(docRef, {
+      name: 'Today',
+      order: 0,
+      isDefault: true,
+      createdAt: serverTimestamp(),
+    })
+  }
+
+  return DEFAULT_TODO_LIST_ID
+}
+
+// Get all todo lists
+export async function getTodoLists(userId: string): Promise<TodoList[]> {
+  const listsRef = collection(db, 'users', userId, 'todolists')
+  const q = query(listsRef, orderBy('order', 'asc'))
+  const snapshot = await getDocs(q)
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt?.toDate() || new Date(),
+  })) as TodoList[]
 }
 
 // ============ Cloud Todos ============
 
-// Subscribe to todos with realtime updates
+// Subscribe to todos with realtime updates (filter by listId)
 export function subscribeTodos(
   userId: string,
+  listId: string,
   callback: (todos: CloudTodoItem[]) => void
 ): Unsubscribe {
   const todosRef = collection(db, 'users', userId, 'todos')
-  const q = query(todosRef, orderBy('createdAt', 'desc'))
+  const q = query(todosRef, where('listId', '==', listId), orderBy('createdAt', 'desc'))
 
   return onSnapshot(q, (snapshot) => {
     const todos = snapshot.docs.map((doc) => ({
@@ -96,12 +165,13 @@ export function subscribeTodos(
 }
 
 // Add a new todo
-export async function addTodo(userId: string, text: string): Promise<string> {
+export async function addTodo(userId: string, text: string, listId: string): Promise<string> {
   const todosRef = collection(db, 'users', userId, 'todos')
   const docRef = doc(todosRef)
   await setDoc(docRef, {
     text,
     completed: false,
+    listId,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
@@ -123,20 +193,21 @@ export async function deleteTodo(userId: string, todoId: string): Promise<void> 
   await deleteDoc(docRef)
 }
 
-// Clear all completed todos
-export async function clearCompletedTodos(userId: string): Promise<void> {
+// Clear all completed todos in a specific list
+export async function clearCompletedTodos(userId: string, listId: string): Promise<void> {
   const todosRef = collection(db, 'users', userId, 'todos')
-  const q = query(todosRef, where('completed', '==', true))
+  const q = query(todosRef, where('listId', '==', listId), where('completed', '==', true))
   const snapshot = await getDocs(q)
 
   const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref))
   await Promise.all(deletePromises)
 }
 
-// Get todo count for limit checking
-export async function getTodoCount(userId: string): Promise<number> {
+// Get todo count for a specific list
+export async function getTodoCount(userId: string, listId: string): Promise<number> {
   const todosRef = collection(db, 'users', userId, 'todos')
-  const snapshot = await getDocs(todosRef)
+  const q = query(todosRef, where('listId', '==', listId))
+  const snapshot = await getDocs(q)
   return snapshot.size
 }
 
@@ -203,4 +274,40 @@ export async function getFavorites(userId: string): Promise<FavoriteWallpaper[]>
     id: doc.id,
     createdAt: doc.data().createdAt?.toDate() || new Date(),
   })) as FavoriteWallpaper[]
+}
+
+// Get favorites count
+export async function getFavoritesCount(userId: string): Promise<number> {
+  const favRef = collection(db, 'users', userId, 'favorites')
+  const snapshot = await getDocs(favRef)
+  return snapshot.size
+}
+
+// Check if user can add more favorites (based on membership)
+export async function canAddFavorite(userId: string): Promise<boolean> {
+  const membership = await getMembership(userId)
+  const currentCount = await getFavoritesCount(userId)
+
+  // -1 means unlimited
+  if (membership.maxFavorites === -1) return true
+
+  return currentCount < membership.maxFavorites
+}
+
+// Subscribe to favorites with realtime updates
+export function subscribeFavorites(
+  userId: string,
+  callback: (favorites: FavoriteWallpaper[]) => void
+): Unsubscribe {
+  const favRef = collection(db, 'users', userId, 'favorites')
+  const q = query(favRef, orderBy('createdAt', 'desc'))
+
+  return onSnapshot(q, (snapshot) => {
+    const favorites = snapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+      createdAt: doc.data().createdAt?.toDate() || new Date(),
+    })) as FavoriteWallpaper[]
+    callback(favorites)
+  })
 }

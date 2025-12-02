@@ -8,6 +8,7 @@ import {
   isFavorited,
   addFavorite,
   removeFavorite,
+  canAddFavorite,
 } from './services/firestore'
 import { User as FirebaseUser } from 'firebase/auth'
 import Clock from './components/Clock'
@@ -15,6 +16,7 @@ import Weather from './components/Weather'
 import WeatherQuote from './components/WeatherQuote'
 import SettingsModal from './components/SettingsModal'
 import TodoApp from './components/Todo/TodoApp'
+import Toast from './components/Toast'
 
 function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null)
@@ -27,6 +29,7 @@ function App() {
   const [weatherDescription, setWeatherDescription] = useState<string>('')
   const [nickname, setNicknameState] = useState<string | null>(null)
   const [isFavorite, setIsFavorite] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' } | null>(null)
 
   const handleWeatherChange = useCallback((description: string) => {
     setWeatherDescription(description)
@@ -125,6 +128,14 @@ function App() {
         await removeFavorite(user.uid, wallpaper.unsplashId)
         setIsFavorite(false)
       } else {
+        // Check if user can add more favorites (max 9)
+        const canAdd = await canAddFavorite(user.uid)
+
+        if (!canAdd) {
+          setToast({ message: 'Maximum 9 favorites allowed', type: 'warning' })
+          return
+        }
+
         await addFavorite(user.uid, {
           id: wallpaper.unsplashId,
           imageUrl: wallpaper.imageUrl,
@@ -134,9 +145,11 @@ function App() {
           category: wallpaper.category,
         })
         setIsFavorite(true)
+        setToast({ message: 'Added to favorites', type: 'success' })
       }
     } catch (error) {
       console.error('Failed to toggle favorite:', error)
+      setToast({ message: 'Failed to save, please try again', type: 'error' })
     }
   }
 
@@ -299,9 +312,19 @@ function App() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        isLoggedIn={!!user}
+        user={user}
         onSignOut={handleSignOut}
+        onSetWallpaper={setWallpaper}
       />
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }

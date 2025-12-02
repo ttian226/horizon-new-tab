@@ -14,6 +14,7 @@ export default {
         'shimmer': 'shimmer 1.5s infinite',
         'fade-in': 'fadeIn 0.5s ease-out forwards',
         'slide-up': 'slideUp 0.3s ease-out forwards',
+        'toast-slide-in': 'toastSlideIn 0.3s ease-out forwards',
       },
       keyframes: {
         shimmer: {
@@ -26,6 +27,10 @@ export default {
         },
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        toastSlideIn: {
+          '0%': { opacity: '0', transform: 'translateY(-10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },

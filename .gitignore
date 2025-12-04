@@ -31,3 +31,10 @@ npm-debug.log*
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+
+# AI-generated documentation (exclude from git)
+*.md
+!README.md
+
+# Release artifacts
+release/horizon-new-tab-v*/

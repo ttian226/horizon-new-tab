@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horizon - Beautiful New Tab for Chrome</title>
+  <meta name="description" content="Transform your Chrome new tab into a beautiful, productive workspace with stunning wallpapers, weather, clock, and focus tools.">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      text-align: center;
+      color: white;
+      padding: 80px 20px;
+      margin-bottom: 40px;
+    }
+
+    .hero h1 {
+      font-size: 4em;
+      font-weight: 300;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero .tagline {
+      font-size: 1.5em;
+      opacity: 0.95;
+      margin-bottom: 40px;
+      font-weight: 300;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 40px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 15px 40px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-size: 1.1em;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: white;
+      color: #667eea;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: white;
+      border: 2px solid white;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .features {
+      background: white;
+      border-radius: 16px;
+      padding: 60px 40px;
+      margin-bottom: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .features h2 {
+      text-align: center;
+      font-size: 2.5em;
+      color: #667eea;
+      margin-bottom: 50px;
+      font-weight: 300;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 40px;
+      margin-top: 40px;
+    }
+
+    .feature-card {
+      text-align: center;
+      padding: 30px;
+      border-radius: 12px;
+      transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      background: #f9fafb;
+    }
+
+    .feature-icon {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+
+    .feature-card h3 {
+      color: #667eea;
+      font-size: 1.5em;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    .feature-card p {
+      color: #666;
+      line-height: 1.8;
+    }
+
+    .screenshot {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .screenshot h2 {
+      color: #667eea;
+      font-size: 2em;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+
+    .screenshot-placeholder {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      padding: 80px 20px;
+      color: white;
+      font-size: 1.2em;
+      opacity: 0.9;
+    }
+
+    .info-section {
+      background: white;
+      border-radius: 16px;
+      padding: 60px 40px;
+      margin-bottom: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .info-section h2 {
+      color: #667eea;
+      font-size: 2em;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+
+    .info-section h3 {
+      color: #555;
+      font-size: 1.4em;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    .info-section p {
+      color: #666;
+      margin-bottom: 15px;
+      line-height: 1.8;
+    }
+
+    .info-section ul {
+      margin: 15px 0 15px 30px;
+    }
+
+    .info-section li {
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .highlight-box {
+      background: #f0f4ff;
+      padding: 25px;
+      border-left: 4px solid #667eea;
+      border-radius: 4px;
+      margin: 25px 0;
+    }
+
+    .footer {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .footer p {
+      color: #666;
+      margin: 10px 0;
+    }
+
+    .footer-links {
+      margin-top: 20px;
+      font-size: 0.9em;
+    }
+
+    .footer-links a {
+      color: #667eea;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 0.9em;
+      margin: 5px;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.5em;
+      }
+
+      .hero .tagline {
+        font-size: 1.2em;
+      }
+
+      .features,
+      .info-section {
+        padding: 40px 20px;
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .btn {
+        width: 100%;
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Hero Section -->
+    <div class="hero">
+      <h1>Horizon</h1>
+      <p class="tagline">Transform your new tab into a beautiful, productive workspace</p>
+      <div class="cta-buttons">
+        <a href="#install" class="btn btn-primary">Get Started</a>
+        <a href="https://github.com/ttian226/horizon-new-tab" target="_blank" class="btn btn-secondary">View on GitHub</a>
+      </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="features">
+      <h2>Everything you need for a perfect new tab</h2>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🖼️</div>
+          <h3>Stunning Wallpapers</h3>
+          <p>Beautiful, high-quality backgrounds that change automatically. Choose from nature, architecture, minimalist, and technology themes.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🌤️</div>
+          <h3>Real-time Weather</h3>
+          <p>Stay informed with accurate weather data for your location. Automatic location detection or manual city selection.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⏰</div>
+          <h3>Beautiful Clock</h3>
+          <p>Elegant clock with personalized greetings. Choose between 12-hour or 24-hour format to match your preference.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔐</div>
+          <h3>Privacy First</h3>
+          <p>Your data stays on your device by default. Optional Google Sign-in for cloud sync across devices. No tracking, no ads.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3>Glassmorphism Design</h3>
+          <p>Modern, clean interface with beautiful glass effects and smooth animations. Easy to use and pleasing to the eye.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">☁️</div>
+          <h3>Cloud Sync</h3>
+          <p>Sign in with Google to sync your preferences, favorite wallpapers, and settings across all your devices.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screenshot Section -->
+    <div class="screenshot">
+      <h2>See it in action</h2>
+      <div class="screenshot-placeholder">
+        Screenshots coming soon
+      </div>
+    </div>
+
+    <!-- Installation Section -->
+    <div class="info-section" id="install">
+      <h2>How to Install</h2>
+
+      <div class="highlight-box">
+        <strong>Chrome Web Store (Recommended - Coming Soon)</strong>
+        <p style="margin-top: 10px;">The extension is currently under review and will be available on the Chrome Web Store soon. This is the easiest and most secure way to install.</p>
+      </div>
+
+      <h3>Manual Installation (For Now)</h3>
+      <p>You can install the extension manually while we're waiting for Chrome Web Store approval:</p>
+      <ol style="margin-left: 30px; color: #666;">
+        <li style="margin: 15px 0;">Download the latest release from <a href="https://github.com/ttian226/horizon-new-tab/releases" target="_blank" style="color: #667eea;">GitHub Releases</a></li>
+        <li style="margin: 15px 0;">Extract the zip file to a folder on your computer</li>
+        <li style="margin: 15px 0;">Open Chrome and go to <code style="background: #f0f4ff; padding: 2px 8px; border-radius: 4px;">chrome://extensions/</code></li>
+        <li style="margin: 15px 0;">Enable "Developer mode" using the toggle in the top right</li>
+        <li style="margin: 15px 0;">Click "Load unpacked" and select the extracted folder</li>
+        <li style="margin: 15px 0;">Open a new tab and enjoy Horizon!</li>
+      </ol>
+
+      <div class="highlight-box" style="margin-top: 30px;">
+        <strong>⚡ Note:</strong> Once installed, you can use Horizon completely offline. Sign-in is optional and only required for cloud sync across devices.
+      </div>
+    </div>
+
+    <!-- Features Detail Section -->
+    <div class="info-section">
+      <h2>Features in Detail</h2>
+
+      <h3>🖼️ Dynamic Wallpapers</h3>
+      <p>Choose from four curated categories:</p>
+      <ul>
+        <li><strong>Nature:</strong> Breathtaking landscapes, forests, and natural wonders</li>
+        <li><strong>Architecture:</strong> Modern buildings and stunning cityscapes</li>
+        <li><strong>Minimalist:</strong> Clean, simple, distraction-free backgrounds</li>
+        <li><strong>Technology:</strong> Futuristic and tech-inspired visuals</li>
+      </ul>
+      <p>Wallpapers update automatically every hour, or manually switch with the next button. Favorite your favorites to create a personal collection.</p>
+
+      <h3>🌤️ Smart Weather</h3>
+      <p>Powered by Open-Meteo API for accurate weather data:</p>
+      <ul>
+        <li>Current temperature and weather conditions</li>
+        <li>Automatic location detection via browser geolocation</li>
+        <li>Manual city search with location name display</li>
+        <li>Privacy-friendly: no personal data stored on weather servers</li>
+      </ul>
+
+      <h3>⏰ Personalized Clock</h3>
+      <ul>
+        <li>Time-based greetings: Good morning, afternoon, or evening</li>
+        <li>Customizable nickname for personal touch</li>
+        <li>Choice of 12-hour or 24-hour format</li>
+        <li>Smooth animations and beautiful Montserrat font</li>
+      </ul>
+
+      <h3>🔐 Privacy & Security</h3>
+      <ul>
+        <li><strong>Local-first:</strong> All data stored on your device by default</li>
+        <li><strong>Optional sign-in:</strong> Google OAuth for cloud sync</li>
+        <li><strong>No tracking:</strong> We don't track your browsing or sell data</li>
+        <li><strong>Open source:</strong> Code available on GitHub for transparency</li>
+      </ul>
+      <p>Read our full <a href="/privacy-policy.html" style="color: #667eea;">Privacy Policy</a></p>
+    </div>
+
+    <!-- Technical Details -->
+    <div class="info-section">
+      <h2>Built with Modern Technology</h2>
+      <p>Horizon is built with cutting-edge web technologies for the best performance and user experience:</p>
+
+      <div style="margin: 30px 0;">
+        <span class="badge">React 18</span>
+        <span class="badge">TypeScript</span>
+        <span class="badge">Vite</span>
+        <span class="badge">Tailwind CSS</span>
+        <span class="badge">Firebase</span>
+        <span class="badge">Chrome Manifest V3</span>
+      </div>
+
+      <h3>Why Chrome Manifest V3?</h3>
+      <p>We use the latest Chrome extension standards (Manifest V3) for:</p>
+      <ul>
+        <li>Better security and privacy protections</li>
+        <li>Improved performance and reliability</li>
+        <li>Future-proof compatibility with Chrome updates</li>
+      </ul>
+    </div>
+
+    <!-- Open Source -->
+    <div class="info-section">
+      <h2>Open Source & Contributing</h2>
+      <p>Horizon is open source and welcomes contributions from the community!</p>
+
+      <div class="highlight-box">
+        <strong>GitHub Repository:</strong> <a href="https://github.com/ttian226/horizon-new-tab" target="_blank" style="color: #667eea;">github.com/ttian226/horizon-new-tab</a>
+      </div>
+
+      <h3>Ways to Contribute</h3>
+      <ul>
+        <li><strong>Report bugs:</strong> Found an issue? Open a GitHub issue</li>
+        <li><strong>Suggest features:</strong> Have an idea? We'd love to hear it</li>
+        <li><strong>Submit code:</strong> Send us a pull request</li>
+        <li><strong>Spread the word:</strong> Share Horizon with friends and on social media</li>
+      </ul>
+    </div>
+
+    <!-- Contact -->
+    <div class="info-section">
+      <h2>Get in Touch</h2>
+      <p>Have questions, feedback, or need support?</p>
+      <ul>
+        <li><strong>Email:</strong> <a href="mailto:ttian226@gmail.com" style="color: #667eea;">ttian226@gmail.com</a></li>
+        <li><strong>GitHub Issues:</strong> <a href="https://github.com/ttian226/horizon-new-tab/issues" target="_blank" style="color: #667eea;">Report a bug or request a feature</a></li>
+        <li><strong>Privacy Policy:</strong> <a href="/privacy-policy.html" style="color: #667eea;">Read our privacy policy</a></li>
+      </ul>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p><strong>Horizon - Beautiful New Tab</strong></p>
+      <p>Made with ❤️ for productivity and beauty</p>
+      <div class="footer-links">
+        <a href="/">Home</a> •
+        <a href="/privacy-policy.html">Privacy Policy</a> •
+        <a href="https://github.com/ttian226/horizon-new-tab" target="_blank">GitHub</a> •
+        <a href="mailto:ttian226@gmail.com">Contact</a>
+      </div>
+      <p style="margin-top: 30px; font-size: 0.85em; color: #999;">
+        © 2024 Horizon. All rights reserved.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

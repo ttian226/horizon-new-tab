@@ -163,6 +163,13 @@ function App() {
     }
   }
 
+  // Handle setting wallpaper (from favorites or other sources)
+  // Also save to localStorage for persistence across tabs
+  const handleSetWallpaper = (wallpaper: WallpaperData) => {
+    setWallpaper(wallpaper)
+    setCurrentWallpaper(wallpaper)
+  }
+
   return (
     <div className="relative w-full h-screen overflow-hidden text-white font-sans-display selection:bg-white/30">
       {/* Background Image */}
@@ -328,7 +335,7 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         user={user}
         onSignOut={handleSignOut}
-        onSetWallpaper={setWallpaper}
+        onSetWallpaper={handleSetWallpaper}
         onWeatherSettingsChange={handleWeatherSettingsChange}
       />
 

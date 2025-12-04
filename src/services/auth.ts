@@ -1,9 +1,9 @@
 // Authentication Service - Firebase Auth
 // Supports Google Sign-in for premium features sync
-// Uses Firebase signInWithPopup for better compatibility across different extension installations
+// Uses chrome.identity API for Manifest V3 compatibility (avoids CSP issues)
 
 import {
-  signInWithPopup,
+  signInWithCredential,
   GoogleAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
@@ -11,24 +11,30 @@ import {
 } from 'firebase/auth'
 import { auth } from '../config/firebase'
 
-// Sign in with Google using Firebase popup
+// Sign in with Google using chrome.identity
 export async function signInWithGoogle(): Promise<User> {
-  const provider = new GoogleAuthProvider()
-  provider.setCustomParameters({
-    prompt: 'select_account'
-  })
-
   try {
-    const result = await signInWithPopup(auth, provider)
+    // Get OAuth token using chrome.identity
+    const token = await new Promise<string>((resolve, reject) => {
+      chrome.identity.getAuthToken({ interactive: true }, (token) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message))
+        } else if (token) {
+          resolve(token)
+        } else {
+          reject(new Error('No token received'))
+        }
+      })
+    })
+
+    // Create Google credential with the token
+    const credential = GoogleAuthProvider.credential(null, token)
+
+    // Sign in to Firebase with the credential
+    const result = await signInWithCredential(auth, credential)
     return result.user
   } catch (error: any) {
-    // Handle specific error cases
-    if (error.code === 'auth/popup-blocked') {
-      throw new Error('Popup was blocked. Please allow popups for this extension.')
-    }
-    if (error.code === 'auth/popup-closed-by-user') {
-      throw new Error('Sign-in cancelled')
-    }
+    console.error('Sign in error:', error)
     throw error
   }
 }

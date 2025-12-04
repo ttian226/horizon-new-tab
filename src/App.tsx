@@ -239,7 +239,10 @@ function App() {
             nickname={nickname}
             onNicknameChange={user ? handleNicknameChange : undefined}
           />
-          {weatherDescription && <WeatherQuote weatherDescription={weatherDescription} />}
+          {/* Quote with fixed spacing to prevent layout shift */}
+          <div className="mt-6">
+            <WeatherQuote weatherDescription={weatherDescription} />
+          </div>
         </main>
 
         {/* --- Footer --- */}

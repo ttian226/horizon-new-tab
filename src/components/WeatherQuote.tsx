@@ -80,16 +80,12 @@ export default function WeatherQuote({ weatherDescription }: WeatherQuoteProps) 
     setQuote(getQuoteForWeather(weatherDescription))
   }, [weatherDescription])
 
-  if (!quote) {
-    return null
-  }
-
   return (
     <p
-      className="mt-6 text-base md:text-lg font-serif-elegant italic text-white/60 max-w-lg text-center leading-relaxed"
+      className="text-base md:text-lg font-serif-elegant italic text-white/60 max-w-lg text-center leading-relaxed"
       style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
     >
-      "{quote}"
+      {quote ? `"${quote}"` : '\u00A0'}
     </p>
   )
 }

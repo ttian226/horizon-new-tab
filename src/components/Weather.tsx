@@ -347,11 +347,15 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
 
   if (loading && !weather) {
     return (
-      <div className="flex flex-col items-end text-right">
+      <div className="flex flex-col items-end text-right px-3 py-2 -mr-3 -mt-2">
         <div className="flex items-center gap-2 text-white/60">
           <CloudSun size={20} />
           <span className="text-lg font-medium">--°C</span>
         </div>
+        {/* Placeholder for city name to prevent layout shift */}
+        <span className="text-xs text-white/40 font-medium tracking-wide uppercase mt-1">
+          Loading...
+        </span>
       </div>
     )
   }

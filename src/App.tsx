@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Settings, RefreshCw, User, ListTodo, Heart } from 'lucide-react'
 import { signInWithGoogle, signOut, onAuthChange } from './services/auth'
-import { getRandomWallpaper, WallpaperData } from './services/wallpaper'
+import { getRandomWallpaper, getOrSetCurrentWallpaper, setCurrentWallpaper, WallpaperData } from './services/wallpaper'
 import {
   getNickname,
   setNickname,
@@ -40,12 +40,13 @@ function App() {
     setWeatherRefreshTrigger((prev) => prev + 1)
   }, [])
 
-  // Load random wallpaper on mount
+  // Load current wallpaper on mount (persistent across tabs)
   useEffect(() => {
     const loadWallpaper = async () => {
       setWallpaperLoading(true)
       try {
-        const data = await getRandomWallpaper()
+        // Get current wallpaper or random if none exists
+        const data = await getOrSetCurrentWallpaper()
         setWallpaper(data)
       } catch (error) {
         console.error('Failed to load wallpaper:', error)
@@ -107,7 +108,11 @@ function App() {
     setChangingWallpaper(true)
     try {
       const next = await getRandomWallpaper()
-      if (next) setWallpaper(next)
+      if (next) {
+        setWallpaper(next)
+        // Save as current wallpaper for persistence across tabs
+        setCurrentWallpaper(next)
+      }
     } catch (error) {
       console.error('Failed to get next wallpaper:', error)
     } finally {

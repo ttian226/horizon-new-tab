@@ -80,11 +80,31 @@ export default function TodoApp({ userId, isOpen, onToggle }: TodoAppProps) {
       return
     }
 
+    // Optimistic update: Add todo locally first for instant feedback
+    const optimisticTodo: CloudTodoItem = {
+      id: `temp-${Date.now()}`, // Temporary ID
+      text: text.slice(0, MAX_TODO_TEXT_LENGTH),
+      completed: false,
+      listId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+
+    // Update UI immediately
+    setTodos((prev) => [optimisticTodo, ...prev])
+    setNewTodoText('')
+
+    // Then sync to Firestore in background
     try {
-      await addTodo(userId, text.slice(0, MAX_TODO_TEXT_LENGTH), listId)
-      setNewTodoText('')
+      const realId = await addTodo(userId, text.slice(0, MAX_TODO_TEXT_LENGTH), listId)
+      // Update the optimistic todo with real ID
+      setTodos((prev) =>
+        prev.map((todo) => (todo.id === optimisticTodo.id ? { ...todo, id: realId } : todo))
+      )
     } catch (error) {
       console.error('Failed to add todo:', error)
+      // Rollback on error: remove the optimistic todo
+      setTodos((prev) => prev.filter((todo) => todo.id !== optimisticTodo.id))
     }
   }
 

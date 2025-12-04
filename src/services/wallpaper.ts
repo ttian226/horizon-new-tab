@@ -20,10 +20,16 @@ export interface WallpaperData {
 }
 
 const CACHE_KEY = 'horizon_all_wallpapers'
+const CURRENT_WALLPAPER_KEY = 'horizon_current_wallpaper'
 
 interface CachedWallpapers {
   wallpapers: WallpaperData[]
   cachedAt: number
+}
+
+interface CurrentWallpaper {
+  wallpaper: WallpaperData
+  setAt: number
 }
 
 // Get cached wallpapers
@@ -113,4 +119,50 @@ export async function getRandomWallpaper(): Promise<WallpaperData | null> {
 export async function getWallpaperCount(): Promise<number> {
   const wallpapers = await getAllWallpapers()
   return wallpapers.length
+}
+
+// ============ Current Wallpaper (Persistent across tabs) ============
+
+// Get current wallpaper from localStorage
+export function getCurrentWallpaper(): WallpaperData | null {
+  try {
+    const cached = localStorage.getItem(CURRENT_WALLPAPER_KEY)
+    if (!cached) return null
+
+    const data: CurrentWallpaper = JSON.parse(cached)
+    return data.wallpaper
+  } catch {
+    return null
+  }
+}
+
+// Save current wallpaper to localStorage
+export function setCurrentWallpaper(wallpaper: WallpaperData): void {
+  try {
+    const data: CurrentWallpaper = {
+      wallpaper,
+      setAt: Date.now(),
+    }
+    localStorage.setItem(CURRENT_WALLPAPER_KEY, JSON.stringify(data))
+  } catch (error) {
+    console.error('Failed to save current wallpaper:', error)
+  }
+}
+
+// Get current wallpaper, or random if none exists
+export async function getOrSetCurrentWallpaper(): Promise<WallpaperData | null> {
+  // Try to get existing current wallpaper
+  const current = getCurrentWallpaper()
+  if (current) {
+    console.log('Using saved current wallpaper')
+    return current
+  }
+
+  // No current wallpaper, get a random one and save it
+  console.log('No current wallpaper, getting random')
+  const random = await getRandomWallpaper()
+  if (random) {
+    setCurrentWallpaper(random)
+  }
+  return random
 }

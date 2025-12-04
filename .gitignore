@@ -38,3 +38,4 @@ ui-debug.log
 
 # Release artifacts
 release/horizon-new-tab-v*/
+release/

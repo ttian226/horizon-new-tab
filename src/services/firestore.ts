@@ -220,7 +220,8 @@ export function subscribeTodos(
   callback: (todos: CloudTodoItem[]) => void
 ): Unsubscribe {
   const todosRef = collection(db, 'users', userId, 'todos')
-  const q = query(todosRef, where('listId', '==', listId), orderBy('createdAt', 'desc'))
+  // Only filter by listId, sort on client side to avoid requiring composite index
+  const q = query(todosRef, where('listId', '==', listId))
 
   return onSnapshot(q, (snapshot) => {
     const todos = snapshot.docs.map((doc) => ({
@@ -229,6 +230,10 @@ export function subscribeTodos(
       createdAt: doc.data().createdAt?.toDate() || new Date(),
       updatedAt: doc.data().updatedAt?.toDate() || new Date(),
     })) as CloudTodoItem[]
+
+    // Sort by createdAt on client side
+    todos.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+
     callback(todos)
   })
 }

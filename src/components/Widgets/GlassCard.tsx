@@ -89,20 +89,21 @@ export default function GlassCard({
       if (!savedPos) {
         // Set default position based on widget id
         // todo: center-left, notes: center-right
+        // Widget width is ~320px, so offset by ~200px to avoid overlap
         let offsetX = 0
         let offsetY = 0
 
         if (id === 'todo') {
-          offsetX = -180  // Left of center
+          offsetX = -200  // Left of center
           offsetY = 0
         } else if (id === 'notes') {
-          offsetX = 180   // Right of center
+          offsetX = 200   // Right of center
           offsetY = 0
         } else {
           // Other widgets: slight random offset
           const hash = id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
-          offsetX = (hash % 3 - 1) * 150
-          offsetY = (hash % 2) * 40 - 20
+          offsetX = (hash % 3 - 1) * 200
+          offsetY = (hash % 2) * 50 - 25
         }
 
         const newPos = { x: offsetX, y: offsetY }
@@ -128,13 +129,13 @@ export default function GlassCard({
 
     // Boundaries
     const padding = 20
-    const dockWidth = 80  // Left side Dock area to avoid
+    const dockMargin = 100  // Left side Dock area + extra spacing
     const halfWidth = size.width / 2
     const halfHeight = size.height / 2
 
     // Calculate bounds: widget can move until its edge hits the boundary
-    // Left boundary: account for Dock width
-    const minX = -window.innerWidth / 2 + halfWidth + dockWidth
+    // Left boundary: account for Dock width + spacing
+    const minX = -window.innerWidth / 2 + halfWidth + dockMargin
     const maxX = window.innerWidth / 2 - halfWidth - padding
     const minY = -window.innerHeight / 2 + halfHeight + padding
     const maxY = window.innerHeight / 2 - halfHeight - padding

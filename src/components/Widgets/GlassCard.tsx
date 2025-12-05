@@ -112,12 +112,20 @@ export default function GlassCard({
     const newX = e.clientX - dragStart.current.x
     const newY = e.clientY - dragStart.current.y
 
-    // Constrain to viewport
-    const maxX = (window.innerWidth - size.width) / 2
-    const maxY = (window.innerHeight - size.height) / 2
+    // Allow full viewport movement with some padding
+    // Widget center starts at viewport center, so calculate bounds accordingly
+    const padding = 20
+    const halfWidth = size.width / 2
+    const halfHeight = size.height / 2
 
-    const constrainedX = Math.max(-maxX, Math.min(maxX, newX))
-    const constrainedY = Math.max(-maxY, Math.min(maxY, newY))
+    // Calculate bounds: widget can move until its edge hits the viewport edge (with padding)
+    const minX = -window.innerWidth / 2 + halfWidth + padding
+    const maxX = window.innerWidth / 2 - halfWidth - padding
+    const minY = -window.innerHeight / 2 + halfHeight + padding
+    const maxY = window.innerHeight / 2 - halfHeight - padding
+
+    const constrainedX = Math.max(minX, Math.min(maxX, newX))
+    const constrainedY = Math.max(minY, Math.min(maxY, newY))
 
     setPosition({ x: constrainedX, y: constrainedY })
   }, [isDragging, size])

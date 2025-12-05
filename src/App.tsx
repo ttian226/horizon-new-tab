@@ -9,14 +9,36 @@ import {
   addFavorite,
   removeFavorite,
   canAddFavorite,
+  getUserSettings,
 } from './services/firestore'
 import { User as FirebaseUser } from 'firebase/auth'
-import Clock from './components/Clock'
+import Clock, { ClockFormat } from './components/Clock'
 import Weather from './components/Weather'
 import WeatherQuote from './components/WeatherQuote'
 import SettingsModal from './components/SettingsModal'
 import TodoApp from './components/Todo/TodoApp'
 import Toast from './components/Toast'
+
+// Clock format localStorage key
+const CLOCK_FORMAT_KEY = 'horizon_clock_format'
+
+function loadClockFormat(): ClockFormat {
+  try {
+    const saved = localStorage.getItem(CLOCK_FORMAT_KEY)
+    if (saved === '12h' || saved === '24h') return saved
+  } catch {
+    // ignore
+  }
+  return '24h'
+}
+
+function saveClockFormat(format: ClockFormat): void {
+  try {
+    localStorage.setItem(CLOCK_FORMAT_KEY, format)
+  } catch {
+    // ignore
+  }
+}
 
 function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null)
@@ -31,6 +53,7 @@ function App() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' } | null>(null)
   const [weatherRefreshTrigger, setWeatherRefreshTrigger] = useState(0)
+  const [clockFormat, setClockFormat] = useState<ClockFormat>(loadClockFormat)
 
   const handleWeatherChange = useCallback((description: string) => {
     setWeatherDescription(description)
@@ -65,10 +88,17 @@ function App() {
     return () => unsubscribe()
   }, [])
 
-  // Load nickname when user changes
+  // Load nickname and clock format when user changes
   useEffect(() => {
     if (user) {
       getNickname(user.uid).then(setNicknameState).catch(console.error)
+      // Sync clock format from cloud
+      getUserSettings(user.uid).then((settings) => {
+        if (settings.clockFormat) {
+          setClockFormat(settings.clockFormat)
+          saveClockFormat(settings.clockFormat)
+        }
+      }).catch(console.error)
     } else {
       setNicknameState(null)
     }
@@ -128,6 +158,11 @@ function App() {
     } catch (error) {
       console.error('Failed to save nickname:', error)
     }
+  }
+
+  const handleClockFormatChange = (format: ClockFormat) => {
+    setClockFormat(format)
+    saveClockFormat(format)
   }
 
   const handleToggleFavorite = async () => {
@@ -238,6 +273,7 @@ function App() {
             userName={user?.displayName?.split(' ')[0]}
             nickname={nickname}
             onNicknameChange={user ? handleNicknameChange : undefined}
+            clockFormat={clockFormat}
           />
           {/* Quote with fixed spacing to prevent layout shift */}
           <div className="mt-6">
@@ -340,6 +376,8 @@ function App() {
         onSignOut={handleSignOut}
         onSetWallpaper={handleSetWallpaper}
         onWeatherSettingsChange={handleWeatherSettingsChange}
+        clockFormat={clockFormat}
+        onClockFormatChange={handleClockFormatChange}
       />
 
       {/* Toast Notification */}

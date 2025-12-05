@@ -143,6 +143,34 @@ export async function updateWeatherSettings(
   }
 }
 
+// Update clock format setting
+export async function updateClockFormat(
+  userId: string,
+  clockFormat: '12h' | '24h'
+): Promise<void> {
+  const docRef = doc(db, 'users', userId)
+  const docSnap = await getDoc(docRef)
+
+  if (docSnap.exists()) {
+    const currentSettings = docSnap.data().settings || DEFAULT_USER_SETTINGS
+    await updateDoc(docRef, {
+      settings: {
+        ...currentSettings,
+        clockFormat,
+      },
+      updatedAt: serverTimestamp(),
+    })
+  } else {
+    await setDoc(docRef, {
+      settings: {
+        ...DEFAULT_USER_SETTINGS,
+        clockFormat,
+      },
+      updatedAt: serverTimestamp(),
+    })
+  }
+}
+
 // ============ Membership ============
 
 const DEFAULT_FREE_MEMBERSHIP: Membership = {

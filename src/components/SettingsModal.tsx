@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { X, Settings, Heart, User, MapPin, Search, Trash2 } from 'lucide-react'
+import { X, Settings, Heart, User, MapPin, Search, Trash2, Clock } from 'lucide-react'
 import { User as FirebaseUser } from 'firebase/auth'
-import { subscribeFavorites, removeFavorite, FavoriteWallpaper, updateWeatherSettings, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
+import { subscribeFavorites, removeFavorite, FavoriteWallpaper, updateWeatherSettings, updateClockFormat, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
 import { WallpaperData } from '../services/wallpaper'
+import { ClockFormat } from './Clock'
 
 type TabType = 'general' | 'favorites' | 'account'
 
@@ -63,6 +64,8 @@ interface SettingsModalProps {
   onSignOut: () => void
   onSetWallpaper: (wallpaper: WallpaperData) => void
   onWeatherSettingsChange?: () => void
+  clockFormat: ClockFormat
+  onClockFormatChange: (format: ClockFormat) => void
 }
 
 export default function SettingsModal({
@@ -72,6 +75,8 @@ export default function SettingsModal({
   onSignOut,
   onSetWallpaper,
   onWeatherSettingsChange,
+  clockFormat,
+  onClockFormatChange,
 }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('general')
   const [favorites, setFavorites] = useState<FavoriteWallpaper[]>([])
@@ -153,6 +158,18 @@ export default function SettingsModal({
       }
     } finally {
       setSearching(false)
+    }
+  }
+
+  const handleToggleClockFormat = () => {
+    const newFormat: ClockFormat = clockFormat === '24h' ? '12h' : '24h'
+    onClockFormatChange(newFormat)
+
+    // Sync to Firestore if user is logged in
+    if (user) {
+      updateClockFormat(user.uid, newFormat).catch((err) =>
+        console.error('Failed to sync clock format to cloud:', err)
+      )
     }
   }
 
@@ -284,6 +301,32 @@ export default function SettingsModal({
                 <div className="pt-2">
                   <div className="text-xs text-white/40 mb-1">Current Location</div>
                   <div className="text-sm text-white/80">{weatherSettings.cityName}</div>
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-white/10 my-4" />
+
+                {/* Clock Settings */}
+                <div className="text-sm text-white/50 mb-4">Clock</div>
+
+                {/* 12/24 Hour Toggle */}
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex items-center gap-3">
+                    <Clock size={18} className="text-white/60" />
+                    <span className="text-sm text-white/80">24-Hour Format</span>
+                  </div>
+                  <button
+                    onClick={handleToggleClockFormat}
+                    className={`w-11 h-6 rounded-full transition-colors ${
+                      clockFormat === '24h' ? 'bg-blue-500' : 'bg-white/20'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full bg-white transition-transform ${
+                        clockFormat === '24h' ? 'translate-x-[22px]' : 'translate-x-[2px]'
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
             )}

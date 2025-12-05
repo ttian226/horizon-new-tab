@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 
+export type ClockFormat = '12h' | '24h'
+
 interface ClockProps {
   userName?: string
   nickname?: string | null
   onNicknameChange?: (nickname: string) => void
+  clockFormat?: ClockFormat
 }
 
 function getGreeting(hour: number): string {
@@ -13,15 +16,35 @@ function getGreeting(hour: number): string {
   return 'Good Night'
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+interface FormattedTime {
+  time: string
+  period?: string // AM/PM for 12h format
 }
 
-export default function Clock({ userName, nickname, onNicknameChange }: ClockProps) {
+function formatTime(date: Date, format: ClockFormat): FormattedTime {
+  if (format === '12h') {
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour12: true,
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+    // Split time and AM/PM
+    const match = timeStr.match(/^(.+?)\s*(AM|PM)$/i)
+    if (match) {
+      return { time: match[1], period: match[2].toUpperCase() }
+    }
+    return { time: timeStr }
+  }
+  return {
+    time: date.toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+}
+
+export default function Clock({ userName, nickname, onNicknameChange, clockFormat = '24h' }: ClockProps) {
   const [time, setTime] = useState(new Date())
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
@@ -74,12 +97,21 @@ export default function Clock({ userName, nickname, onNicknameChange }: ClockPro
     handleSave()
   }
 
+  const formattedTime = formatTime(time, clockFormat)
+
   return (
     <div className="text-center select-none">
       {/* Time: Montserrat, elegant and refined */}
-      <h1 className="text-[8rem] md:text-[11rem] leading-none font-normal tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 drop-shadow-2xl font-clock">
-        {formatTime(time)}
-      </h1>
+      <div className="relative inline-block">
+        <h1 className="text-[8rem] md:text-[11rem] leading-none font-normal tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 drop-shadow-2xl font-clock">
+          {formattedTime.time}
+        </h1>
+        {formattedTime.period && (
+          <span className="absolute -right-12 md:-right-16 top-4 md:top-6 text-[1.5rem] md:text-[2rem] font-clock text-white/60 font-light">
+            {formattedTime.period}
+          </span>
+        )}
+      </div>
 
       {/* Greeting: Elegant Serif */}
       <h2 className="mt-4 text-2xl md:text-3xl font-serif-elegant italic text-white/80 drop-shadow-md font-normal">

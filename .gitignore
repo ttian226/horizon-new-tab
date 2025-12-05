@@ -32,9 +32,8 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
-# AI-generated documentation (exclude from git)
-*.md
-!README.md
+# AI notes and prompts (exclude from git)
+.ai-notes/
 
 # Release artifacts
 release/horizon-new-tab-v*/

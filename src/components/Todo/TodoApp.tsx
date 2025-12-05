@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Plus, Check, Trash2, Pin } from 'lucide-react'
+import { X, Plus, Check, Trash, PushPin } from '@phosphor-icons/react'
 import {
   CloudTodoItem,
   subscribeTodos,
@@ -189,14 +189,14 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
             }`}
             title={isPinned ? 'Unpin panel' : 'Pin panel'}
           >
-            <Pin size={16} className={isPinned ? 'fill-current' : ''} />
+            <PushPin size={16} weight={isPinned ? 'fill' : 'duotone'} />
           </button>
           {/* Close Button */}
           <button
             onClick={handleClose}
             className="text-white/40 hover:text-white transition-colors"
           >
-            <X size={16} />
+            <X size={16} weight="bold" />
           </button>
         </div>
       </div>
@@ -247,7 +247,7 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
           </div>
         ) : (
           <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-            <Plus size={16} className="text-white/40" />
+            <Plus size={16} weight="bold" className="text-white/40" />
             <input
               ref={inputRef}
               type="text"
@@ -290,7 +290,7 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
             : 'border-white/20 hover:border-white/40'
         }`}
       >
-        {todo.completed && <Check size={12} className="text-white/70" />}
+        {todo.completed && <Check size={12} weight="bold" className="text-white/70" />}
       </button>
 
       {/* Text */}
@@ -309,7 +309,7 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
           showDelete ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <Trash2 size={14} />
+        <Trash size={14} weight="duotone" />
       </button>
     </div>
   )

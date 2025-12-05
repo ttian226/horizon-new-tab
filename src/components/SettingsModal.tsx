@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Settings, Heart, User, MapPin, Search, Trash2, Clock } from 'lucide-react'
+import { X, Gear, Heart, User, MapPin, MagnifyingGlass, Trash, Clock } from '@phosphor-icons/react'
 import { User as FirebaseUser } from 'firebase/auth'
 import { subscribeFavorites, removeFavorite, FavoriteWallpaper, updateWeatherSettings, updateClockFormat, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
 import { WallpaperData } from '../services/wallpaper'
@@ -204,8 +204,8 @@ export default function SettingsModal({
 
   if (!isOpen) return null
 
-  const tabs: { id: TabType; icon: typeof Settings; label: string }[] = [
-    { id: 'general', icon: Settings, label: 'General' },
+  const tabs: { id: TabType; icon: typeof Gear; label: string }[] = [
+    { id: 'general', icon: Gear, label: 'General' },
     { id: 'favorites', icon: Heart, label: 'Favorites' },
     { id: 'account', icon: User, label: 'Account' },
   ]
@@ -226,7 +226,7 @@ export default function SettingsModal({
               }`}
               title={id.charAt(0).toUpperCase() + id.slice(1)}
             >
-              <Icon size={20} />
+              <Icon size={20} weight="duotone" />
             </button>
           ))}
         </nav>
@@ -244,7 +244,7 @@ export default function SettingsModal({
               onClick={onClose}
               className="text-white/40 hover:text-white transition-colors p-1"
             >
-              <X size={20} />
+              <X size={20} weight="bold" />
             </button>
           </header>
 
@@ -258,7 +258,7 @@ export default function SettingsModal({
                 {/* Auto Location Toggle */}
                 <div className="flex items-center justify-between py-2">
                   <div className="flex items-center gap-3">
-                    <MapPin size={18} className="text-white/60" />
+                    <MapPin size={18} weight="duotone" className="text-white/60" />
                     <span className="text-sm text-white/80">Auto Location</span>
                   </div>
                   <button
@@ -278,7 +278,7 @@ export default function SettingsModal({
                 {/* Manual City Search */}
                 {!weatherSettings.isAuto && (
                   <div className="flex items-center gap-2 bg-white/5 rounded-xl px-4 py-3">
-                    <Search size={16} className="text-white/40" />
+                    <MagnifyingGlass size={16} weight="duotone" className="text-white/40" />
                     <input
                       type="text"
                       value={searchQuery}
@@ -312,7 +312,7 @@ export default function SettingsModal({
                 {/* 12/24 Hour Toggle */}
                 <div className="flex items-center justify-between py-2">
                   <div className="flex items-center gap-3">
-                    <Clock size={18} className="text-white/60" />
+                    <Clock size={18} weight="duotone" className="text-white/60" />
                     <span className="text-sm text-white/80">24-Hour Format</span>
                   </div>
                   <button
@@ -362,7 +362,7 @@ export default function SettingsModal({
                             className="p-2 rounded-full bg-black/50 hover:bg-red-500/80 transition-colors"
                             title="Remove from favorites"
                           >
-                            <Trash2 size={16} className="text-white" />
+                            <Trash size={16} weight="duotone" className="text-white" />
                           </button>
                         </div>
                       </button>
@@ -392,7 +392,7 @@ export default function SettingsModal({
                           />
                         ) : (
                           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                            <User size={28} className="text-white" />
+                            <User size={28} weight="duotone" className="text-white" />
                           </div>
                         )}
                       </div>

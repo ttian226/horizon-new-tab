@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { CloudSun, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, MapPin, Search } from 'lucide-react'
+import { CloudSun, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, MapPin, MagnifyingGlass } from '@phosphor-icons/react'
 import { getUserSettings, updateWeatherSettings, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
 
 interface WeatherData {
@@ -349,7 +349,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
     return (
       <div className="flex flex-col items-end text-right px-3 py-2 -mr-3 -mt-2">
         <div className="flex items-center gap-2 text-white/60">
-          <CloudSun size={20} />
+          <CloudSun size={20} weight="duotone" />
           <span className="text-lg font-medium">--°C</span>
         </div>
         {/* Placeholder for city name to prevent layout shift */}
@@ -372,7 +372,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
         className="flex flex-col items-end text-right rounded-lg px-3 py-2 -mr-3 -mt-2 hover:bg-white/10 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-2 text-white/90">
-          <WeatherIcon size={20} />
+          <WeatherIcon size={20} weight="duotone" />
           <span className="text-lg font-medium">{weather.temperature}°C</span>
         </div>
         <span className="text-xs text-white/60 font-medium tracking-wide uppercase mt-1">
@@ -395,7 +395,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
               className="w-full flex items-center justify-between"
             >
               <div className="flex items-center gap-2">
-                <MapPin size={16} className="text-white/60" />
+                <MapPin size={16} weight="duotone" className="text-white/60" />
                 <span className="text-sm text-white/80">Auto Location</span>
               </div>
               <div
@@ -416,7 +416,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
           {!settings.isAuto && (
             <div className="p-4 border-b border-white/5">
               <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-                <Search size={14} className="text-white/40" />
+                <MagnifyingGlass size={14} weight="duotone" className="text-white/40" />
                 <input
                   type="text"
                   value={searchQuery}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Clock } from 'lucide-react'
+import { Clock } from '@phosphor-icons/react'
 import GlassCard from './GlassCard'
 
 type ClockFormat = '12h' | '24h'

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ListTodo, Plus, Check, Trash2 } from 'lucide-react'
+import { ListChecks, Plus, Check, Trash } from '@phosphor-icons/react'
 import GlassCard from './GlassCard'
 import {
   CloudTodoItem,
@@ -104,7 +104,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
     <GlassCard
       id="todo"
       title="Today's Tasks"
-      icon={ListTodo}
+      icon={ListChecks}
       onClose={onClose}
       defaultWidth={320}
       defaultHeight={380}
@@ -160,7 +160,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
           </div>
         ) : (
           <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-            <Plus size={16} className="text-white/40" />
+            <Plus size={16} weight="bold" className="text-white/40" />
             <input
               type="text"
               value={newTodoText}
@@ -201,7 +201,7 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
             : 'border-white/20 hover:border-white/40'
         }`}
       >
-        {todo.completed && <Check size={10} className="text-white/70" />}
+        {todo.completed && <Check size={10} weight="bold" className="text-white/70" />}
       </button>
 
       <span
@@ -218,7 +218,7 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
           showDelete ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <Trash2 size={12} />
+        <Trash size={12} weight="duotone" />
       </button>
     </div>
   )

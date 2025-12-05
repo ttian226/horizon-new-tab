@@ -1,4 +1,4 @@
-import { ListTodo, StickyNote } from 'lucide-react'
+import { ListChecks, Note, Icon as PhosphorIcon } from '@phosphor-icons/react'
 
 type WidgetId = 'todo' | 'notes'
 
@@ -9,13 +9,13 @@ interface DockProps {
 
 interface DockItem {
   id: WidgetId
-  icon: typeof ListTodo
+  icon: PhosphorIcon
   label: string
 }
 
 const dockItems: DockItem[] = [
-  { id: 'todo', icon: ListTodo, label: 'Todo' },
-  { id: 'notes', icon: StickyNote, label: 'Notes' },
+  { id: 'todo', icon: ListChecks, label: 'Todo' },
+  { id: 'notes', icon: Note, label: 'Notes' },
   // Future: { id: 'pomodoro', icon: Timer, label: 'Pomodoro' },
 ]
 
@@ -37,7 +37,7 @@ export default function Dock({ activeWidgets, onToggleWidget }: DockProps) {
             }`}
             title={item.label}
           >
-            <Icon size={20} />
+            <Icon size={20} weight="duotone" />
 
             {/* Active indicator dot */}
             {isActive && (

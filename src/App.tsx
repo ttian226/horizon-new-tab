@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, RefreshCw, User, ListTodo, Heart, Maximize2, Minimize2 } from 'lucide-react'
+import { Gear, ArrowsClockwise, User, ListChecks, Heart, ArrowsOut, ArrowsIn } from '@phosphor-icons/react'
 import { signInWithGoogle, signOut, onAuthChange } from './services/auth'
 import { getRandomWallpaper, getOrSetCurrentWallpaper, setCurrentWallpaper, WallpaperData } from './services/wallpaper'
 import {
@@ -339,7 +339,7 @@ function App() {
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                    <User size={18} className="text-white" />
+                    <User size={18} weight="duotone" className="text-white" />
                   </div>
                 )}
               </div>
@@ -349,7 +349,7 @@ function App() {
                 disabled={authLoading}
                 className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all disabled:opacity-50 shadow-lg"
               >
-                <User size={18} className="text-white/80" />
+                <User size={18} weight="duotone" className="text-white/80" />
               </button>
             )}
           </div>
@@ -396,7 +396,7 @@ function App() {
                 className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/20 transition-all"
                 title="Exit focus mode"
               >
-                <Minimize2 size={18} />
+                <ArrowsIn size={18} weight="duotone" />
               </button>
             ) : (
               /* Normal Mode: Settings, Focus, Todo */
@@ -407,18 +407,18 @@ function App() {
                     setIsSettingsOpen(true)
                     setIsTodoOpen(false)
                   }}
-                  className="text-white/70 hover:text-white transition-opacity"
+                  className="p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:bg-black/30 transition-all"
                 >
-                  <Settings size={20} />
+                  <Gear size={18} weight="duotone" />
                 </button>
 
                 {/* Focus/Work Mode Toggle */}
                 <button
                   onClick={handleWorkModeToggle}
-                  className="text-white/70 hover:text-white transition-all duration-300"
+                  className="p-2.5 rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:bg-black/30 transition-all"
                   title="Enter focus mode"
                 >
-                  <Maximize2 size={20} />
+                  <ArrowsOut size={18} weight="duotone" />
                 </button>
 
                 {/* Todo Icon - Only show when logged in */}
@@ -433,11 +433,13 @@ function App() {
                       }
                       setIsSettingsOpen(false)
                     }}
-                    className={`transition-opacity ${
-                      isTodoPinned ? 'text-blue-400 hover:text-blue-300' : 'text-white/70 hover:text-white'
+                    className={`p-2.5 rounded-full backdrop-blur-md border border-white/10 transition-all ${
+                      isTodoPinned
+                        ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+                        : 'bg-black/20 text-white/70 hover:text-white hover:bg-black/30'
                     }`}
                   >
-                    <ListTodo size={20} />
+                    <ListChecks size={18} weight="duotone" />
                   </button>
                 )}
 
@@ -471,17 +473,16 @@ function App() {
               {user && (
                 <button
                   onClick={handleToggleFavorite}
-                  className="transition-all duration-300 hover:scale-110 active:scale-90"
+                  className={`p-2 rounded-full backdrop-blur-md border transition-all duration-300 hover:scale-105 active:scale-95 ${
+                    isFavorite
+                      ? 'bg-rose-500/20 border-rose-400/30 text-rose-400'
+                      : 'bg-black/20 border-white/10 text-white/60 hover:text-white hover:bg-black/30'
+                  }`}
                   title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
                   <Heart
-                    size={16}
-                    strokeWidth={1.5}
-                    className={`transition-all duration-500 ${
-                      isFavorite
-                        ? 'fill-white/50 text-white/50 drop-shadow-[0_0_8px_rgba(251,113,133,0.5)]'
-                        : 'fill-transparent text-white/50 hover:text-white/70'
-                    }`}
+                    size={14}
+                    weight={isFavorite ? 'fill' : 'duotone'}
                   />
                 </button>
               )}
@@ -493,8 +494,9 @@ function App() {
                 className="group flex items-center gap-2 text-xs text-white font-light font-clock cursor-pointer transition-all hover:opacity-100 opacity-70 disabled:opacity-40"
                 style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
               >
-                <RefreshCw
+                <ArrowsClockwise
                   size={12}
+                  weight="bold"
                   className={`transition-transform group-hover:rotate-180 duration-300 ${changingWallpaper ? 'animate-spin' : ''}`}
                 />
                 <span className="group-hover:underline underline-offset-2">

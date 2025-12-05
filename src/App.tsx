@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, RefreshCw, User, ListTodo, Heart } from 'lucide-react'
+import { Settings, RefreshCw, User, ListTodo, Heart, Maximize2, Minimize2 } from 'lucide-react'
 import { signInWithGoogle, signOut, onAuthChange } from './services/auth'
 import { getRandomWallpaper, getOrSetCurrentWallpaper, setCurrentWallpaper, WallpaperData } from './services/wallpaper'
 import {
@@ -19,8 +19,10 @@ import SettingsModal from './components/SettingsModal'
 import TodoApp from './components/Todo/TodoApp'
 import Toast from './components/Toast'
 
-// Clock format localStorage key
+// localStorage keys
 const CLOCK_FORMAT_KEY = 'horizon_clock_format'
+const TODO_PINNED_KEY = 'horizon_todo_pinned'
+const WORK_MODE_KEY = 'horizon_work_mode'
 
 function loadClockFormat(): ClockFormat {
   try {
@@ -40,6 +42,38 @@ function saveClockFormat(format: ClockFormat): void {
   }
 }
 
+function loadTodoPinned(): boolean {
+  try {
+    return localStorage.getItem(TODO_PINNED_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function saveTodoPinned(pinned: boolean): void {
+  try {
+    localStorage.setItem(TODO_PINNED_KEY, String(pinned))
+  } catch {
+    // ignore
+  }
+}
+
+function loadWorkMode(): boolean {
+  try {
+    return localStorage.getItem(WORK_MODE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function saveWorkMode(enabled: boolean): void {
+  try {
+    localStorage.setItem(WORK_MODE_KEY, String(enabled))
+  } catch {
+    // ignore
+  }
+}
+
 function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null)
   const [authLoading, setAuthLoading] = useState(false)
@@ -54,6 +88,8 @@ function App() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' } | null>(null)
   const [weatherRefreshTrigger, setWeatherRefreshTrigger] = useState(0)
   const [clockFormat, setClockFormat] = useState<ClockFormat>(loadClockFormat)
+  const [isTodoPinned, setIsTodoPinned] = useState(loadTodoPinned)
+  const [isWorkMode, setIsWorkMode] = useState(loadWorkMode)
 
   const handleWeatherChange = useCallback((description: string) => {
     setWeatherDescription(description)
@@ -99,10 +135,14 @@ function App() {
           saveClockFormat(settings.clockFormat)
         }
       }).catch(console.error)
+      // Auto-open todo panel if pinned
+      if (isTodoPinned) {
+        setIsTodoOpen(true)
+      }
     } else {
       setNicknameState(null)
     }
-  }, [user])
+  }, [user, isTodoPinned])
 
   // Check if current wallpaper is favorited
   useEffect(() => {
@@ -163,6 +203,28 @@ function App() {
   const handleClockFormatChange = (format: ClockFormat) => {
     setClockFormat(format)
     saveClockFormat(format)
+  }
+
+  const handleTodoPinToggle = (pinned: boolean) => {
+    setIsTodoPinned(pinned)
+    saveTodoPinned(pinned)
+    // If pinning, ensure todo panel is open
+    if (pinned) {
+      setIsTodoOpen(true)
+    }
+  }
+
+  const handleTodoClose = () => {
+    // Only close if not pinned
+    if (!isTodoPinned) {
+      setIsTodoOpen(false)
+    }
+  }
+
+  const handleWorkModeToggle = () => {
+    const newValue = !isWorkMode
+    setIsWorkMode(newValue)
+    saveWorkMode(newValue)
   }
 
   const handleToggleFavorite = async () => {
@@ -259,24 +321,33 @@ function App() {
             )}
           </div>
 
-          {/* Weather Section */}
-          <Weather
-            onWeatherChange={handleWeatherChange}
-            userId={user?.uid || null}
-            refreshTrigger={weatherRefreshTrigger}
-          />
+          {/* Weather Section - Reduced opacity in work mode */}
+          <div className={`transition-opacity duration-500 ease-in-out ${isWorkMode ? 'opacity-50 hover:opacity-100' : 'opacity-100'}`}>
+            <Weather
+              onWeatherChange={handleWeatherChange}
+              userId={user?.uid || null}
+              refreshTrigger={weatherRefreshTrigger}
+            />
+          </div>
         </header>
 
         {/* --- Main Center Content --- */}
-        <main className="flex flex-col items-center justify-center">
+        <main className={`flex flex-col transition-all duration-700 ease-in-out ${
+          isWorkMode
+            ? 'items-end justify-end -mb-6 pr-4'
+            : 'items-center justify-center'
+        }`}>
           <Clock
             userName={user?.displayName?.split(' ')[0]}
             nickname={nickname}
             onNicknameChange={user ? handleNicknameChange : undefined}
             clockFormat={clockFormat}
+            isWorkMode={isWorkMode}
           />
-          {/* Quote with fixed spacing to prevent layout shift */}
-          <div className="mt-6">
+          {/* Quote with fixed spacing to prevent layout shift - Hidden in work mode */}
+          <div className={`mt-6 transition-all duration-500 ease-in-out ${
+            isWorkMode ? 'opacity-0 h-0 mt-0 overflow-hidden pointer-events-none' : 'opacity-100'
+          }`}>
             <WeatherQuote weatherDescription={weatherDescription} />
           </div>
         </main>
@@ -296,14 +367,33 @@ function App() {
               <Settings size={20} />
             </button>
 
+            {/* Focus/Work Mode Toggle */}
+            <button
+              onClick={handleWorkModeToggle}
+              className={`transition-all duration-300 ${
+                isWorkMode ? 'text-blue-400 hover:text-blue-300' : 'text-white/70 hover:text-white'
+              }`}
+              title={isWorkMode ? 'Exit focus mode' : 'Enter focus mode'}
+            >
+              {isWorkMode ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+            </button>
+
             {/* Todo Icon - Only show when logged in */}
             {user && (
               <button
                 onClick={() => {
-                  setIsTodoOpen(!isTodoOpen)
+                  if (isTodoPinned && isTodoOpen) {
+                    // If pinned and open, unpin and close
+                    handleTodoPinToggle(false)
+                    setIsTodoOpen(false)
+                  } else {
+                    setIsTodoOpen(!isTodoOpen)
+                  }
                   setIsSettingsOpen(false)
                 }}
-                className="text-white/70 hover:text-white transition-opacity"
+                className={`transition-opacity ${
+                  isTodoPinned ? 'text-blue-400 hover:text-blue-300' : 'text-white/70 hover:text-white'
+                }`}
               >
                 <ListTodo size={20} />
               </button>
@@ -314,6 +404,8 @@ function App() {
               <TodoApp
                 userId={user.uid}
                 isOpen={isTodoOpen}
+                isPinned={isTodoPinned}
+                onPinToggle={handleTodoPinToggle}
                 onToggle={() => setIsTodoOpen(false)}
               />
             )}

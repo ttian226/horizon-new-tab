@@ -7,6 +7,7 @@ interface ClockProps {
   nickname?: string | null
   onNicknameChange?: (nickname: string) => void
   clockFormat?: ClockFormat
+  isWorkMode?: boolean
 }
 
 function getGreeting(hour: number): string {
@@ -44,7 +45,7 @@ function formatTime(date: Date, format: ClockFormat): FormattedTime {
   }
 }
 
-export default function Clock({ userName, nickname, onNicknameChange, clockFormat = '24h' }: ClockProps) {
+export default function Clock({ userName, nickname, onNicknameChange, clockFormat = '24h', isWorkMode = false }: ClockProps) {
   const [time, setTime] = useState(new Date())
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
@@ -100,21 +101,29 @@ export default function Clock({ userName, nickname, onNicknameChange, clockForma
   const formattedTime = formatTime(time, clockFormat)
 
   return (
-    <div className="text-center select-none">
+    <div className={`select-none transition-all duration-700 ease-in-out ${isWorkMode ? 'text-right' : 'text-center'}`}>
       {/* Time: Montserrat, elegant and refined */}
       <div className="relative inline-block">
-        <h1 className="text-[8rem] md:text-[11rem] leading-none font-normal tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 drop-shadow-2xl font-clock">
+        <h1 className={`leading-none font-normal tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 drop-shadow-2xl font-clock transition-all duration-700 ease-in-out ${
+          isWorkMode ? 'text-[3rem] md:text-[4rem]' : 'text-[8rem] md:text-[11rem]'
+        }`}>
           {formattedTime.time}
         </h1>
         {formattedTime.period && (
-          <span className="absolute -right-12 md:-right-16 top-4 md:top-6 text-[1.5rem] md:text-[2rem] font-clock text-white/60 font-light">
+          <span className={`absolute font-clock text-white/60 font-light transition-all duration-700 ease-in-out ${
+            isWorkMode
+              ? '-right-8 md:-right-10 top-1 md:top-2 text-[1rem] md:text-[1.25rem]'
+              : '-right-12 md:-right-16 top-4 md:top-6 text-[1.5rem] md:text-[2rem]'
+          }`}>
             {formattedTime.period}
           </span>
         )}
       </div>
 
-      {/* Greeting: Elegant Serif */}
-      <h2 className="mt-4 text-2xl md:text-3xl font-serif-elegant italic text-white/80 drop-shadow-md font-normal">
+      {/* Greeting: Elegant Serif - Hidden in work mode */}
+      <h2 className={`mt-4 text-2xl md:text-3xl font-serif-elegant italic text-white/80 drop-shadow-md font-normal transition-all duration-500 ease-in-out ${
+        isWorkMode ? 'opacity-0 h-0 mt-0 overflow-hidden' : 'opacity-100'
+      }`}>
         {greeting},{' '}
         {isEditing ? (
           <input

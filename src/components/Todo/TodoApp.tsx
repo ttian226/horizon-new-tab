@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Plus, Check, Trash2 } from 'lucide-react'
+import { X, Plus, Check, Trash2, Pin } from 'lucide-react'
 import {
   CloudTodoItem,
   subscribeTodos,
@@ -18,14 +18,17 @@ const DEFAULT_TODO_LIST_ID = 'today'
 interface TodoAppProps {
   userId: string
   isOpen: boolean
+  isPinned: boolean
   onToggle: () => void
+  onPinToggle: (pinned: boolean) => void
 }
 
-export default function TodoApp({ userId, isOpen, onToggle }: TodoAppProps) {
+export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggle }: TodoAppProps) {
   const [todos, setTodos] = useState<CloudTodoItem[]>([])
   const [newTodoText, setNewTodoText] = useState('')
   const [loading, setLoading] = useState(true)
   const [listId, setListId] = useState<string>(DEFAULT_TODO_LIST_ID)
+  const [isHovered, setIsHovered] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -56,11 +59,14 @@ export default function TodoApp({ userId, isOpen, onToggle }: TodoAppProps) {
     }
   }, [isOpen])
 
-  // Close panel when clicking outside
+  // Close panel when clicking outside (only if not pinned)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onToggle()
+        // Don't close if pinned
+        if (!isPinned) {
+          onToggle()
+        }
       }
     }
 
@@ -68,7 +74,7 @@ export default function TodoApp({ userId, isOpen, onToggle }: TodoAppProps) {
       document.addEventListener('mousedown', handleClickOutside)
     }
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen, onToggle])
+  }, [isOpen, isPinned, onToggle])
 
   const handleAddTodo = async () => {
     const text = newTodoText.trim()
@@ -143,10 +149,23 @@ export default function TodoApp({ userId, isOpen, onToggle }: TodoAppProps) {
 
   if (!isOpen) return null
 
+  // Handle close button click
+  const handleClose = () => {
+    if (isPinned) {
+      // If pinned, unpin first then close
+      onPinToggle(false)
+    }
+    onToggle()
+  }
+
   return (
     <div
       ref={panelRef}
-      className="absolute bottom-8 left-0 w-80 max-h-96 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`absolute bottom-8 left-0 w-80 max-h-96 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content transition-opacity duration-300 ${
+        isPinned && !isHovered ? 'opacity-60' : 'opacity-100'
+      }`}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/5">
@@ -162,8 +181,19 @@ export default function TodoApp({ userId, isOpen, onToggle }: TodoAppProps) {
               Clear done
             </button>
           )}
+          {/* Pin Button */}
           <button
-            onClick={onToggle}
+            onClick={() => onPinToggle(!isPinned)}
+            className={`transition-colors ${
+              isPinned ? 'text-blue-400 hover:text-blue-300' : 'text-white/40 hover:text-white'
+            }`}
+            title={isPinned ? 'Unpin panel' : 'Pin panel'}
+          >
+            <Pin size={16} className={isPinned ? 'fill-current' : ''} />
+          </button>
+          {/* Close Button */}
+          <button
+            onClick={handleClose}
             className="text-white/40 hover:text-white transition-colors"
           >
             <X size={16} />

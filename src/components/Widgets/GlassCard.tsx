@@ -202,13 +202,15 @@ export default function GlassCard({
   return (
     <div
       ref={cardRef}
-      className={`absolute bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl overflow-hidden select-none ${
+      className={`fixed bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl overflow-hidden select-none ${
         isDragging || isResizing ? 'cursor-grabbing' : ''
       } ${className}`}
       style={{
         width: size.width,
         height: size.height,
-        transform: `translate(${position.x}px, ${position.y}px)`,
+        left: '50%',
+        top: '50%',
+        transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`,
         zIndex: isDragging || isResizing ? 100 : 10,
       }}
     >

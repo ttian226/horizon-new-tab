@@ -18,6 +18,7 @@ import WeatherQuote from './components/WeatherQuote'
 import SettingsModal from './components/SettingsModal'
 import TodoApp from './components/Todo/TodoApp'
 import Toast from './components/Toast'
+import { NotesWidget, TodoWidget, Dock, WidgetId } from './components/Widgets'
 
 // localStorage keys
 const CLOCK_FORMAT_KEY = 'horizon_clock_format'
@@ -90,6 +91,7 @@ function App() {
   const [clockFormat, setClockFormat] = useState<ClockFormat>(loadClockFormat)
   const [isTodoPinned, setIsTodoPinned] = useState(loadTodoPinned)
   const [isWorkMode, setIsWorkMode] = useState(loadWorkMode)
+  const [activeWidgets, setActiveWidgets] = useState<WidgetId[]>([])
 
   const handleWeatherChange = useCallback((description: string) => {
     setWeatherDescription(description)
@@ -225,6 +227,33 @@ function App() {
     const newValue = !isWorkMode
     setIsWorkMode(newValue)
     saveWorkMode(newValue)
+    // Clear active widgets when exiting focus mode
+    if (!newValue) {
+      setActiveWidgets([])
+    }
+  }
+
+  const handleToggleWidget = (widgetId: WidgetId) => {
+    setActiveWidgets((prev) => {
+      if (prev.includes(widgetId)) {
+        // Remove widget
+        return prev.filter((id) => id !== widgetId)
+      } else {
+        // Add widget (at the end for z-index priority)
+        return [...prev, widgetId]
+      }
+    })
+  }
+
+  const handleCloseWidget = (widgetId: WidgetId) => {
+    setActiveWidgets((prev) => prev.filter((id) => id !== widgetId))
+  }
+
+  const handleBringToFront = (widgetId: WidgetId) => {
+    setActiveWidgets((prev) => {
+      if (prev[prev.length - 1] === widgetId) return prev // Already on top
+      return [...prev.filter((id) => id !== widgetId), widgetId]
+    })
   }
 
   const handleToggleFavorite = async () => {
@@ -272,7 +301,9 @@ function App() {
       {/* Background Image */}
       {wallpaper && (
         <div
-          className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
+          className={`absolute inset-0 bg-cover bg-center transition-all duration-700 ${
+            isWorkMode ? 'blur-md brightness-75 scale-105' : ''
+          }`}
           style={{ backgroundImage: `url(${wallpaper.imageUrl})` }}
         />
       )}
@@ -292,8 +323,10 @@ function App() {
 
       {/* Main Grid Layout */}
       <div className="relative z-10 grid grid-rows-[auto_1fr_auto] h-full p-8 md:p-12">
-        {/* --- Top Header --- */}
-        <header className="flex justify-between items-start">
+        {/* --- Top Header --- Hidden in work mode */}
+        <header className={`flex justify-between items-start transition-all duration-500 ${
+          isWorkMode ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}>
           {/* User Avatar - Floating minimal style */}
           <div>
             {user ? (
@@ -352,74 +385,87 @@ function App() {
           </div>
         </main>
 
-        {/* --- Footer --- */}
-        <footer className="flex justify-between items-end">
+        {/* --- Footer --- Always on top for controls */}
+        <footer className="flex justify-between items-end relative z-30">
           {/* Bottom Control Hub - Left */}
           <div className="relative flex items-end gap-5">
-            {/* Settings Icon */}
-            <button
-              onClick={() => {
-                setIsSettingsOpen(true)
-                setIsTodoOpen(false)
-              }}
-              className="text-white/70 hover:text-white transition-opacity"
-            >
-              <Settings size={20} />
-            </button>
-
-            {/* Focus/Work Mode Toggle */}
-            <button
-              onClick={handleWorkModeToggle}
-              className={`transition-all duration-300 ${
-                isWorkMode ? 'text-blue-400 hover:text-blue-300' : 'text-white/70 hover:text-white'
-              }`}
-              title={isWorkMode ? 'Exit focus mode' : 'Enter focus mode'}
-            >
-              {isWorkMode ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-            </button>
-
-            {/* Todo Icon - Only show when logged in */}
-            {user && (
+            {isWorkMode ? (
+              /* Focus Mode: Only Exit button - minimal circular icon */
               <button
-                onClick={() => {
-                  if (isTodoPinned && isTodoOpen) {
-                    // If pinned and open, unpin and close
-                    handleTodoPinToggle(false)
-                    setIsTodoOpen(false)
-                  } else {
-                    setIsTodoOpen(!isTodoOpen)
-                  }
-                  setIsSettingsOpen(false)
-                }}
-                className={`transition-opacity ${
-                  isTodoPinned ? 'text-blue-400 hover:text-blue-300' : 'text-white/70 hover:text-white'
-                }`}
+                onClick={handleWorkModeToggle}
+                className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/20 transition-all"
+                title="Exit focus mode"
               >
-                <ListTodo size={20} />
+                <Minimize2 size={18} />
               </button>
-            )}
+            ) : (
+              /* Normal Mode: Settings, Focus, Todo */
+              <>
+                {/* Settings Icon */}
+                <button
+                  onClick={() => {
+                    setIsSettingsOpen(true)
+                    setIsTodoOpen(false)
+                  }}
+                  className="text-white/70 hover:text-white transition-opacity"
+                >
+                  <Settings size={20} />
+                </button>
 
-            {/* Todo Panel - positioned relative to control hub */}
-            {user && (
-              <TodoApp
-                userId={user.uid}
-                isOpen={isTodoOpen}
-                isPinned={isTodoPinned}
-                onPinToggle={handleTodoPinToggle}
-                onToggle={() => setIsTodoOpen(false)}
-              />
+                {/* Focus/Work Mode Toggle */}
+                <button
+                  onClick={handleWorkModeToggle}
+                  className="text-white/70 hover:text-white transition-all duration-300"
+                  title="Enter focus mode"
+                >
+                  <Maximize2 size={20} />
+                </button>
+
+                {/* Todo Icon - Only show when logged in */}
+                {user && (
+                  <button
+                    onClick={() => {
+                      if (isTodoPinned && isTodoOpen) {
+                        handleTodoPinToggle(false)
+                        setIsTodoOpen(false)
+                      } else {
+                        setIsTodoOpen(!isTodoOpen)
+                      }
+                      setIsSettingsOpen(false)
+                    }}
+                    className={`transition-opacity ${
+                      isTodoPinned ? 'text-blue-400 hover:text-blue-300' : 'text-white/70 hover:text-white'
+                    }`}
+                  >
+                    <ListTodo size={20} />
+                  </button>
+                )}
+
+                {/* Todo Panel - positioned relative to control hub */}
+                {user && !isWorkMode && (
+                  <TodoApp
+                    userId={user.uid}
+                    isOpen={isTodoOpen}
+                    isPinned={isTodoPinned}
+                    onPinToggle={handleTodoPinToggle}
+                    onToggle={() => setIsTodoOpen(false)}
+                  />
+                )}
+              </>
             )}
           </div>
 
-          {/* Bottom Center Brand */}
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-10 md:bottom-12 opacity-50 hover:opacity-100 transition-opacity">
+          {/* Bottom Center Brand - Hidden in focus mode */}
+          <div className={`absolute left-1/2 -translate-x-1/2 bottom-10 md:bottom-12 transition-opacity ${
+            isWorkMode ? 'opacity-0 pointer-events-none' : 'opacity-50 hover:opacity-100'
+          }`}>
             <span className="text-xs tracking-[0.2em] uppercase font-semibold">
               Horizon
             </span>
           </div>
 
-          {/* Right side: Favorite + Photo Credit */}
-          {wallpaper && (
+          {/* Right side: Favorite + Photo Credit - Hidden in focus mode */}
+          {wallpaper && !isWorkMode && (
             <div className="flex items-center gap-3">
               {/* Favorite Heart - Only show when logged in */}
               {user && (
@@ -459,6 +505,37 @@ function App() {
           )}
         </footer>
       </div>
+
+      {/* Workbench Container - Visible in work mode */}
+      {isWorkMode && (
+        <>
+          {/* Dock - Left side toolbar */}
+          <Dock activeWidgets={activeWidgets} onToggleWidget={handleToggleWidget} />
+
+          {/* Widget Canvas - Center area */}
+          <div className="fixed inset-0 z-20 flex items-center justify-center pointer-events-none">
+            {/* Render widgets based on activeWidgets array (order = z-index) */}
+            {activeWidgets.map((widgetId, index) => (
+              <div
+                key={widgetId}
+                className="pointer-events-auto"
+                style={{ zIndex: 20 + index }}
+                onMouseDown={() => handleBringToFront(widgetId)}
+              >
+                {widgetId === 'todo' && user && (
+                  <TodoWidget
+                    userId={user.uid}
+                    onClose={() => handleCloseWidget('todo')}
+                  />
+                )}
+                {widgetId === 'notes' && (
+                  <NotesWidget onClose={() => handleCloseWidget('notes')} />
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Settings Modal */}
       <SettingsModal

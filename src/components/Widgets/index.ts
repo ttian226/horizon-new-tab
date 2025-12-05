@@ -1,0 +1,6 @@
+export { default as GlassCard } from './GlassCard'
+export { default as NotesWidget } from './NotesWidget'
+export { default as ClockWidget } from './ClockWidget'
+export { default as TodoWidget } from './TodoWidget'
+export { default as Dock } from './Dock'
+export type { WidgetId } from './Dock'

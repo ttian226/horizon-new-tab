@@ -87,10 +87,24 @@ export default function GlassCard({
     if (!initialized && cardRef.current) {
       const savedPos = loadPosition(id)
       if (!savedPos) {
-        // Center the card initially with some offset based on id hash
-        const hash = id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
-        const offsetX = (hash % 3 - 1) * 180  // -180, 0, or 180
-        const offsetY = (hash % 2) * 50 - 25  // -25 or 25
+        // Set default position based on widget id
+        // todo: center-left, notes: center-right
+        let offsetX = 0
+        let offsetY = 0
+
+        if (id === 'todo') {
+          offsetX = -180  // Left of center
+          offsetY = 0
+        } else if (id === 'notes') {
+          offsetX = 180   // Right of center
+          offsetY = 0
+        } else {
+          // Other widgets: slight random offset
+          const hash = id.split('').reduce((a, b) => a + b.charCodeAt(0), 0)
+          offsetX = (hash % 3 - 1) * 150
+          offsetY = (hash % 2) * 40 - 20
+        }
+
         const newPos = { x: offsetX, y: offsetY }
         setPosition(newPos)
         savePosition(id, newPos)
@@ -112,14 +126,15 @@ export default function GlassCard({
     const newX = e.clientX - dragStart.current.x
     const newY = e.clientY - dragStart.current.y
 
-    // Allow full viewport movement with some padding
-    // Widget center starts at viewport center, so calculate bounds accordingly
+    // Boundaries
     const padding = 20
+    const dockWidth = 80  // Left side Dock area to avoid
     const halfWidth = size.width / 2
     const halfHeight = size.height / 2
 
-    // Calculate bounds: widget can move until its edge hits the viewport edge (with padding)
-    const minX = -window.innerWidth / 2 + halfWidth + padding
+    // Calculate bounds: widget can move until its edge hits the boundary
+    // Left boundary: account for Dock width
+    const minX = -window.innerWidth / 2 + halfWidth + dockWidth
     const maxX = window.innerWidth / 2 - halfWidth - padding
     const minY = -window.innerHeight / 2 + halfHeight + padding
     const maxY = window.innerHeight / 2 - halfHeight - padding
@@ -240,7 +255,7 @@ export default function GlassCard({
 
       {/* Content */}
       <div
-        className="p-4 overflow-hidden"
+        className="p-4 overflow-hidden flex flex-col"
         style={{ height: `calc(100% - 48px)` }}
       >
         {children}

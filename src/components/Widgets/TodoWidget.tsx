@@ -109,8 +109,8 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
       defaultWidth={320}
       defaultHeight={380}
     >
-      {/* Todo List */}
-      <div className="overflow-y-auto flex-1 -mx-4 px-4" style={{ maxHeight: 'calc(100% - 80px)' }}>
+      {/* Todo List - Takes remaining space */}
+      <div className="flex-1 overflow-y-auto -mx-4 px-4 min-h-0">
         {loading ? (
           <div className="text-center py-4 text-white/40 text-sm">Loading...</div>
         ) : todos.length === 0 ? (
@@ -142,7 +142,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
 
       {/* Clear completed button */}
       {completedTodos.length > 0 && (
-        <div className="mt-2 -mx-4 px-4 pt-2 border-t border-white/5">
+        <div className="-mx-4 px-4 pt-2 border-t border-white/5 flex-shrink-0">
           <button
             onClick={handleClearCompleted}
             className="text-xs text-white/30 hover:text-white/60 transition-colors"
@@ -152,8 +152,8 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
         </div>
       )}
 
-      {/* Input */}
-      <div className="mt-3 -mx-4 px-4 pt-3 border-t border-white/5">
+      {/* Input - Always at bottom */}
+      <div className="-mx-4 px-4 pt-3 mt-auto border-t border-white/5 flex-shrink-0">
         {todos.length >= MAX_TODO_COUNT ? (
           <div className="text-center text-xs text-white/30 py-1">
             Limit reached ({MAX_TODO_COUNT} tasks)

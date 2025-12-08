@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Warning, CheckCircle, X } from '@phosphor-icons/react'
+import { AlertTriangle, CheckCircle, X } from 'lucide-react'
 
 type ToastType = 'success' | 'warning' | 'error'
 
@@ -24,19 +24,19 @@ export default function Toast({ message, type = 'warning', duration = 3000, onCl
       case 'success':
         return (
           <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center">
-            <CheckCircle size={14} weight="duotone" className="text-green-400" />
+            <CheckCircle size={14} className="text-green-400" strokeWidth={2.5} />
           </div>
         )
       case 'error':
         return (
           <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center">
-            <X size={14} weight="bold" className="text-red-400" />
+            <X size={14} className="text-red-400" strokeWidth={2.5} />
           </div>
         )
       default: // warning/limit
         return (
           <div className="w-5 h-5 rounded-full bg-yellow-500/20 flex items-center justify-center">
-            <Warning size={14} weight="duotone" className="text-yellow-400" />
+            <AlertTriangle size={14} className="text-yellow-400" strokeWidth={2.5} />
           </div>
         )
     }

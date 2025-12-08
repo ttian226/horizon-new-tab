@@ -1,5 +1,5 @@
 import { ReactNode, useState, useRef, useEffect, useCallback } from 'react'
-import { X, DotsSixVertical, Icon as PhosphorIcon } from '@phosphor-icons/react'
+import { X, GripHorizontal, LucideIcon } from 'lucide-react'
 
 // Minimum dimensions
 const MIN_WIDTH = 280
@@ -18,7 +18,7 @@ interface Size {
 interface GlassCardProps {
   id: string  // Unique ID for localStorage persistence
   title: string
-  icon: PhosphorIcon
+  icon: LucideIcon
   children: ReactNode
   onClose?: () => void
   defaultWidth?: number
@@ -236,8 +236,8 @@ export default function GlassCard({
         onMouseDown={handleDragStart}
       >
         <div className="flex items-center gap-2">
-          <DotsSixVertical size={14} weight="bold" className="text-white/30" />
-          <Icon size={16} weight="duotone" className="text-white/60" />
+          <GripHorizontal size={14} className="text-white/30" />
+          <Icon size={16} className="text-white/60" />
           <span className="text-sm font-medium text-white/80 tracking-wide">{title}</span>
         </div>
         {onClose && (
@@ -249,7 +249,7 @@ export default function GlassCard({
             onMouseDown={(e) => e.stopPropagation()}
             className="text-white/40 hover:text-white/80 transition-colors"
           >
-            <X size={14} weight="bold" />
+            <X size={14} />
           </button>
         )}
       </div>

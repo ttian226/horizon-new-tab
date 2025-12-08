@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Plus, Check, Trash, PushPin } from '@phosphor-icons/react'
+import { X, Plus, Check, Trash2, Pin } from 'lucide-react'
 import {
   CloudTodoItem,
   subscribeTodos,
@@ -163,7 +163,7 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
       ref={panelRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`absolute bottom-8 left-0 w-80 max-h-96 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content transition-opacity duration-300 ${
+      className={`absolute bottom-14 left-0 w-80 max-h-96 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content transition-opacity duration-300 ${
         isPinned && !isHovered ? 'opacity-60' : 'opacity-100'
       }`}
     >
@@ -189,14 +189,14 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
             }`}
             title={isPinned ? 'Unpin panel' : 'Pin panel'}
           >
-            <PushPin size={16} weight={isPinned ? 'fill' : 'duotone'} />
+            <Pin size={16} className={isPinned ? 'fill-current' : ''} />
           </button>
           {/* Close Button */}
           <button
             onClick={handleClose}
             className="text-white/40 hover:text-white transition-colors"
           >
-            <X size={16} weight="bold" />
+            <X size={16} />
           </button>
         </div>
       </div>
@@ -247,7 +247,7 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
           </div>
         ) : (
           <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-            <Plus size={16} weight="bold" className="text-white/40" />
+            <Plus size={16} className="text-white/40" />
             <input
               ref={inputRef}
               type="text"
@@ -290,7 +290,7 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
             : 'border-white/20 hover:border-white/40'
         }`}
       >
-        {todo.completed && <Check size={12} weight="bold" className="text-white/70" />}
+        {todo.completed && <Check size={12} className="text-white/70" />}
       </button>
 
       {/* Text */}
@@ -309,7 +309,7 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
           showDelete ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <Trash size={14} weight="duotone" />
+        <Trash2 size={14} />
       </button>
     </div>
   )

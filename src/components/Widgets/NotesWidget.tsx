@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Note } from '@phosphor-icons/react'
+import { StickyNote } from 'lucide-react'
 import GlassCard from './GlassCard'
 
 const NOTES_STORAGE_KEY = 'horizon_user_notes'
@@ -50,7 +50,7 @@ export default function NotesWidget({ onClose }: NotesWidgetProps) {
     <GlassCard
       id="notes"
       title="Quick Notes"
-      icon={Note}
+      icon={StickyNote}
       onClose={onClose}
       defaultWidth={320}
       defaultHeight={280}

@@ -440,12 +440,14 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
   if (loading && !weather) {
     return (
       <div className="flex flex-col items-end text-right px-3 py-2 -mr-3 -mt-2">
-        <div className="flex items-center gap-2 text-white/60">
-          <CloudSun size={20} />
-          <span className="text-lg font-medium">--{unitSymbol}</span>
+        <div className="flex items-center gap-2.5">
+          <span className="font-serif text-3xl leading-none text-white/40">
+            --°
+          </span>
+          <CloudSun size={24} className="text-white/40" />
         </div>
         {/* Placeholder for city name to prevent layout shift */}
-        <span className="text-xs text-white/40 font-medium tracking-wide uppercase mt-1">
+        <span className="text-[11px] text-white/30 font-medium tracking-[0.12em] uppercase mt-1.5">
           Loading...
         </span>
       </div>
@@ -463,11 +465,15 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
         onClick={() => setIsOpen(!isOpen)}
         className="flex flex-col items-end text-right rounded-lg px-3 py-2 -mr-3 -mt-2 hover:bg-white/10 transition-colors cursor-pointer"
       >
-        <div className="flex items-center gap-2 text-white/90">
-          <WeatherIcon size={20} />
-          <span className="text-lg font-medium">{displayTemp}{unitSymbol}</span>
+        {/* Row 1: Temperature + Icon */}
+        <div className="flex items-center gap-2.5">
+          <span className="font-serif text-3xl leading-none text-white/90">
+            {displayTemp}°
+          </span>
+          <WeatherIcon size={24} className="text-white/80" />
         </div>
-        <span className="text-xs text-white/60 font-medium tracking-wide uppercase mt-1">
+        {/* Row 2: City name - uppercase with letter spacing */}
+        <span className="text-[11px] text-white/60 font-medium tracking-[0.12em] uppercase mt-1.5">
           {weather.city}
         </span>
       </button>

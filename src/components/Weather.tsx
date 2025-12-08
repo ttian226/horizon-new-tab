@@ -14,6 +14,7 @@ interface WeatherSettings {
   lon: number
   cityName: string
   unit: TemperatureUnit
+  unitInitialized?: boolean // true after unit is set based on initial location
 }
 
 // Smart default: US users get Fahrenheit, others get Celsius
@@ -82,20 +83,31 @@ function saveSettings(settings: WeatherSettings): void {
   }
 }
 
-// Reverse geocoding to get city name
-async function getCityName(lat: number, lon: number): Promise<string> {
+// Reverse geocoding to get city name and country code
+async function getCityName(lat: number, lon: number): Promise<{ city: string; countryCode: string }> {
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`
     const response = await fetch(url, {
       headers: { 'User-Agent': 'HorizonNewTab/1.0' }
     })
-    if (!response.ok) return 'Unknown'
+    if (!response.ok) return { city: 'Unknown', countryCode: '' }
     const data = await response.json()
     const cityName = data.address?.city || data.address?.town || data.address?.village || data.address?.county || 'Unknown'
-    return cityName.replace(/\s*(City|District|County|Prefecture)$/i, '').trim()
+    const countryCode = data.address?.country_code?.toUpperCase() || ''
+    return {
+      city: cityName.replace(/\s*(City|District|County|Prefecture)$/i, '').trim(),
+      countryCode
+    }
   } catch {
-    return 'Unknown'
+    return { city: 'Unknown', countryCode: '' }
   }
+}
+
+// Countries that use Fahrenheit (US and its territories)
+const FAHRENHEIT_COUNTRIES = ['US', 'PR', 'GU', 'VI', 'AS', 'MP'] // US, Puerto Rico, Guam, US Virgin Islands, American Samoa, Northern Mariana Islands
+
+function getUnitByCountry(countryCode: string): TemperatureUnit {
+  return FAHRENHEIT_COUNTRIES.includes(countryCode) ? 'imperial' : 'metric'
 }
 
 // Search city using Open-Meteo Geocoding API
@@ -119,7 +131,11 @@ async function searchCity(query: string): Promise<{ lat: number; lon: number; na
   }
 }
 
-async function fetchWeather(lat: number, lon: number, cityName?: string): Promise<WeatherData> {
+interface FetchWeatherResult extends WeatherData {
+  countryCode: string
+}
+
+async function fetchWeather(lat: number, lon: number, cityName?: string): Promise<FetchWeatherResult> {
   const weatherResponse = await fetch(
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`
   )
@@ -127,13 +143,23 @@ async function fetchWeather(lat: number, lon: number, cityName?: string): Promis
   if (!weatherResponse.ok) throw new Error('Failed to fetch weather')
   const data = await weatherResponse.json()
 
-  // Use provided cityName or fetch it
-  const city = cityName || await getCityName(lat, lon)
+  // Use provided cityName or fetch it (also get country code)
+  let city: string
+  let countryCode: string = ''
+
+  if (cityName) {
+    city = cityName
+  } else {
+    const locationInfo = await getCityName(lat, lon)
+    city = locationInfo.city
+    countryCode = locationInfo.countryCode
+  }
 
   return {
     temperature: Math.round(data.current.temperature_2m),
     weatherCode: data.current.weather_code,
     city,
+    countryCode,
   }
 }
 
@@ -193,9 +219,25 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
       const data = await fetchWeather(lat, lon, cityName)
       setWeather(data)
 
+      // Check if we need to initialize unit based on location (first time only)
+      let newSettings = { ...currentSettings }
+      let needsUpdate = false
+
+      // Initialize unit based on country code if not yet initialized
+      if (!currentSettings.unitInitialized && data.countryCode) {
+        const detectedUnit = getUnitByCountry(data.countryCode)
+        newSettings = { ...newSettings, unit: detectedUnit, unitInitialized: true }
+        needsUpdate = true
+        console.log(`Temperature unit initialized to ${detectedUnit} based on country: ${data.countryCode}`)
+      }
+
       // Update settings with actual city name if auto
       if (currentSettings.isAuto && data.city !== currentSettings.cityName) {
-        const newSettings = { ...currentSettings, lat, lon, cityName: data.city }
+        newSettings = { ...newSettings, lat, lon, cityName: data.city }
+        needsUpdate = true
+      }
+
+      if (needsUpdate) {
         setSettings(newSettings)
         saveSettings(newSettings)
 
@@ -326,7 +368,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
   // Toggle temperature unit
   const handleToggleUnit = () => {
     const newUnit: TemperatureUnit = settings.unit === 'metric' ? 'imperial' : 'metric'
-    const newSettings = { ...settings, unit: newUnit }
+    const newSettings = { ...settings, unit: newUnit, unitInitialized: true }
     setSettings(newSettings)
     saveSettings(newSettings)
 

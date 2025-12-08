@@ -34,7 +34,10 @@ service cloud.firestore {
                         && request.resource.data.settings.weather.auto is bool
                         && request.resource.data.settings.weather.cityName is string
                         && request.resource.data.settings.weather.lat is number
-                        && request.resource.data.settings.weather.lon is number))));
+                        && request.resource.data.settings.weather.lon is number
+                        // unit is optional, validate if present
+                        && (!request.resource.data.settings.weather.keys().hasAny(['unit'])
+                            || request.resource.data.settings.weather.unit in ['metric', 'imperial'])))));
 
       // User membership
       match /membership/info {

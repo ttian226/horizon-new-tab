@@ -18,12 +18,16 @@ import {
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
 
+// Temperature unit type
+export type TemperatureUnit = 'metric' | 'imperial'
+
 // Weather settings interface
 export interface WeatherSettings {
   auto: boolean
   cityName: string
   lat: number
   lon: number
+  unit?: TemperatureUnit // 'metric' = Celsius, 'imperial' = Fahrenheit
 }
 
 // User settings interface (stored in users/{uid}/settings field)

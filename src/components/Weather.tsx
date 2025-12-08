@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { CloudSun, Cloud, Sun, CloudRain, CloudSnow, CloudLightning, CloudFog, MapPin, Search } from 'lucide-react'
-import { getUserSettings, updateWeatherSettings, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
+import { getUserSettings, updateWeatherSettings, type WeatherSettings as FirestoreWeatherSettings, type TemperatureUnit } from '../services/firestore'
 
 interface WeatherData {
   temperature: number
@@ -13,6 +13,18 @@ interface WeatherSettings {
   lat: number
   lon: number
   cityName: string
+  unit: TemperatureUnit
+}
+
+// Smart default: US users get Fahrenheit, others get Celsius
+function getDefaultUnit(): TemperatureUnit {
+  const lang = navigator.language || 'en'
+  return lang === 'en-US' ? 'imperial' : 'metric'
+}
+
+// Convert Celsius to Fahrenheit
+function celsiusToFahrenheit(celsius: number): number {
+  return Math.round((celsius * 9/5) + 32)
 }
 
 const SETTINGS_KEY = 'horizon_weather_settings'
@@ -48,12 +60,17 @@ function loadSettings(): WeatherSettings {
   try {
     const saved = localStorage.getItem(SETTINGS_KEY)
     if (saved) {
-      return JSON.parse(saved)
+      const parsed = JSON.parse(saved)
+      // Ensure unit exists (for backward compatibility)
+      return {
+        ...parsed,
+        unit: parsed.unit || getDefaultUnit()
+      }
     }
   } catch {
     // ignore
   }
-  return { isAuto: true, ...DEFAULT_LOCATION }
+  return { isAuto: true, ...DEFAULT_LOCATION, unit: getDefaultUnit() }
 }
 
 // Save settings to localStorage
@@ -189,6 +206,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
             lat: newSettings.lat,
             lon: newSettings.lon,
             cityName: newSettings.cityName,
+            unit: newSettings.unit,
           }
           updateWeatherSettings(userId, firestoreSettings).catch((err) =>
             console.error('Failed to sync weather settings to cloud:', err)
@@ -227,6 +245,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
           lat: cloudWeather.lat,
           lon: cloudWeather.lon,
           cityName: cloudWeather.cityName,
+          unit: cloudWeather.unit || getDefaultUnit(),
         }
 
         // Compare with local settings - if different, use cloud settings
@@ -235,7 +254,8 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
           localSettings.isAuto !== cloudSettings.isAuto ||
           localSettings.lat !== cloudSettings.lat ||
           localSettings.lon !== cloudSettings.lon ||
-          localSettings.cityName !== cloudSettings.cityName
+          localSettings.cityName !== cloudSettings.cityName ||
+          localSettings.unit !== cloudSettings.unit
 
         if (isDifferent) {
           // Cloud settings are different, update local
@@ -291,6 +311,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
         lat: newSettings.lat,
         lon: newSettings.lon,
         cityName: newSettings.cityName,
+        unit: newSettings.unit,
       }
       updateWeatherSettings(userId, firestoreSettings).catch((err) =>
         console.error('Failed to sync weather settings to cloud:', err)
@@ -299,6 +320,28 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
 
     if (newIsAuto) {
       await loadWeather(newSettings)
+    }
+  }
+
+  // Toggle temperature unit
+  const handleToggleUnit = () => {
+    const newUnit: TemperatureUnit = settings.unit === 'metric' ? 'imperial' : 'metric'
+    const newSettings = { ...settings, unit: newUnit }
+    setSettings(newSettings)
+    saveSettings(newSettings)
+
+    // Sync to Firestore in background if user is logged in
+    if (userId) {
+      const firestoreSettings: FirestoreWeatherSettings = {
+        auto: newSettings.isAuto,
+        lat: newSettings.lat,
+        lon: newSettings.lon,
+        cityName: newSettings.cityName,
+        unit: newUnit,
+      }
+      updateWeatherSettings(userId, firestoreSettings).catch((err) =>
+        console.error('Failed to sync weather settings to cloud:', err)
+      )
     }
   }
 
@@ -328,6 +371,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
             lat: result.lat,
             lon: result.lon,
             cityName: result.name,
+            unit: settings.unit,
           }
           updateWeatherSettings(userId, firestoreSettings).catch((err) =>
             console.error('Failed to sync weather settings to cloud:', err)
@@ -345,12 +389,18 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
     }
   }
 
+  // Get display temperature based on unit
+  const displayTemp = weather
+    ? (settings.unit === 'imperial' ? celsiusToFahrenheit(weather.temperature) : weather.temperature)
+    : null
+  const unitSymbol = settings.unit === 'imperial' ? '°F' : '°C'
+
   if (loading && !weather) {
     return (
       <div className="flex flex-col items-end text-right px-3 py-2 -mr-3 -mt-2">
         <div className="flex items-center gap-2 text-white/60">
           <CloudSun size={20} />
-          <span className="text-lg font-medium">--°C</span>
+          <span className="text-lg font-medium">--{unitSymbol}</span>
         </div>
         {/* Placeholder for city name to prevent layout shift */}
         <span className="text-xs text-white/40 font-medium tracking-wide uppercase mt-1">
@@ -373,7 +423,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
       >
         <div className="flex items-center gap-2 text-white/90">
           <WeatherIcon size={20} />
-          <span className="text-lg font-medium">{weather.temperature}°C</span>
+          <span className="text-lg font-medium">{displayTemp}{unitSymbol}</span>
         </div>
         <span className="text-xs text-white/60 font-medium tracking-wide uppercase mt-1">
           {weather.city}
@@ -385,7 +435,40 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
         <div className="absolute top-full right-0 mt-2 w-64 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content">
           {/* Header */}
           <div className="p-4 border-b border-white/5">
-            <h3 className="text-sm font-medium text-white/90">Location Settings</h3>
+            <h3 className="text-sm font-medium text-white/90">Weather Settings</h3>
+          </div>
+
+          {/* Temperature Unit Toggle */}
+          <div className="p-4 border-b border-white/5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-white/80">Temperature</span>
+              <div className="flex bg-white/10 rounded-lg p-0.5">
+                <button
+                  onClick={() => {
+                    if (settings.unit !== 'metric') handleToggleUnit()
+                  }}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                    settings.unit === 'metric'
+                      ? 'bg-white/20 text-white'
+                      : 'text-white/50 hover:text-white/70'
+                  }`}
+                >
+                  °C
+                </button>
+                <button
+                  onClick={() => {
+                    if (settings.unit !== 'imperial') handleToggleUnit()
+                  }}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                    settings.unit === 'imperial'
+                      ? 'bg-white/20 text-white'
+                      : 'text-white/50 hover:text-white/70'
+                  }`}
+                >
+                  °F
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Auto Location Toggle */}

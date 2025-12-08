@@ -3,8 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horizon - Beautiful New Tab for Chrome</title>
+  <title>Horizon-Tab - Beautiful New Tab for Chrome</title>
   <meta name="description" content="Transform your Chrome new tab into a beautiful, productive workspace with stunning wallpapers, weather, clock, and focus tools.">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -13,10 +17,13 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       line-height: 1.6;
-      color: #333;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #44403c;
+      background-color: #FAFAF9;
+      background-image:
+        radial-gradient(circle at 50% 30%, rgba(255,255,255,0.8) 0%, transparent 50%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
       min-height: 100vh;
       padding: 40px 20px;
     }
@@ -28,15 +35,61 @@
 
     .hero {
       text-align: center;
-      color: white;
+      color: #5c4a3d;
       padding: 80px 20px;
       margin-bottom: 40px;
     }
 
-    .hero h1 {
-      font-size: 4em;
-      font-weight: 300;
+    .hero-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
       margin-bottom: 20px;
+    }
+
+    .hero-icon-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-icon-glass {
+      width: 100px;
+      height: 100px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-icon-glow {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(217, 119, 6, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+      z-index: -1;
+    }
+
+    .hero-icon {
+      width: 72px;
+      height: 72px;
+      filter: drop-shadow(0 4px 12px rgba(217, 119, 6, 0.2));
+    }
+
+    .hero h1 {
+      font-size: 3.5em;
+      font-weight: 300;
+      margin: 0;
       text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
     }
 
@@ -67,38 +120,42 @@
     }
 
     .btn-primary {
-      background: white;
-      color: #667eea;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      background: #d97706;
+      color: white;
+      box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+      background: #b45309;
+      box-shadow: 0 6px 25px rgba(217, 119, 6, 0.4);
     }
 
     .btn-secondary {
       background: transparent;
-      color: white;
-      border: 2px solid white;
+      color: #5c4a3d;
+      border: 2px solid #d97706;
     }
 
     .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(217, 119, 6, 0.1);
     }
 
     .features {
-      background: white;
-      border-radius: 16px;
+      background: rgba(255, 252, 248, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 24px;
       padding: 60px 40px;
       margin-bottom: 40px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.6);
     }
 
     .features h2 {
       text-align: center;
       font-size: 2.5em;
-      color: #667eea;
+      color: #b45309;
       margin-bottom: 50px;
       font-weight: 300;
     }
@@ -119,7 +176,7 @@
 
     .feature-card:hover {
       transform: translateY(-5px);
-      background: #f9fafb;
+      background: rgba(255, 255, 255, 0.5);
     }
 
     .feature-icon {
@@ -128,7 +185,7 @@
     }
 
     .feature-card h3 {
-      color: #667eea;
+      color: #b45309;
       font-size: 1.5em;
       margin-bottom: 15px;
       font-weight: 500;
@@ -140,23 +197,26 @@
     }
 
     .screenshot {
-      background: white;
-      border-radius: 16px;
+      background: rgba(255, 252, 248, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 24px;
       padding: 40px;
       margin-bottom: 40px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.6);
       text-align: center;
     }
 
     .screenshot h2 {
-      color: #667eea;
+      color: #b45309;
       font-size: 2em;
       margin-bottom: 30px;
       font-weight: 300;
     }
 
     .screenshot-placeholder {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #fbbf24 0%, #fb923c 100%);
       border-radius: 12px;
       padding: 80px 20px;
       color: white;
@@ -165,15 +225,18 @@
     }
 
     .info-section {
-      background: white;
-      border-radius: 16px;
+      background: rgba(255, 252, 248, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 24px;
       padding: 60px 40px;
       margin-bottom: 40px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.6);
     }
 
     .info-section h2 {
-      color: #667eea;
+      color: #b45309;
       font-size: 2em;
       margin-bottom: 30px;
       font-weight: 300;
@@ -203,19 +266,22 @@
     }
 
     .highlight-box {
-      background: #f0f4ff;
+      background: #fef3c7;
       padding: 25px;
-      border-left: 4px solid #667eea;
+      border-left: 4px solid #d97706;
       border-radius: 4px;
       margin: 25px 0;
     }
 
     .footer {
-      background: white;
-      border-radius: 16px;
+      background: rgba(255, 252, 248, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 24px;
       padding: 40px;
       text-align: center;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.6);
     }
 
     .footer p {
@@ -229,7 +295,7 @@
     }
 
     .footer-links a {
-      color: #667eea;
+      color: #b45309;
       text-decoration: none;
       margin: 0 10px;
     }
@@ -240,7 +306,7 @@
 
     .badge {
       display: inline-block;
-      background: #667eea;
+      background: #d97706;
       color: white;
       padding: 5px 15px;
       border-radius: 20px;
@@ -249,8 +315,24 @@
     }
 
     @media (max-width: 768px) {
+      .hero-icon-glass {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+      }
+
+      .hero-icon {
+        width: 56px;
+        height: 56px;
+      }
+
+      .hero-icon-glow {
+        width: 110px;
+        height: 110px;
+      }
+
       .hero h1 {
-        font-size: 2.5em;
+        font-size: 2.2em;
       }
 
       .hero .tagline {
@@ -282,7 +364,15 @@
   <div class="container">
     <!-- Hero Section -->
     <div class="hero">
-      <h1>Horizon</h1>
+      <div class="hero-logo">
+        <div class="hero-icon-wrapper">
+          <div class="hero-icon-glow"></div>
+          <div class="hero-icon-glass">
+            <img src="icon.png" alt="Horizon-Tab" class="hero-icon">
+          </div>
+        </div>
+        <h1>Horizon-Tab</h1>
+      </div>
       <p class="tagline">Transform your new tab into a beautiful, productive workspace</p>
       <div class="cta-buttons">
         <a href="#install" class="btn btn-primary">Get Started</a>
@@ -359,9 +449,9 @@
       <h3>Manual Installation (For Now)</h3>
       <p>You can install the extension manually while we're waiting for Chrome Web Store approval:</p>
       <ol style="margin-left: 30px; color: #666;">
-        <li style="margin: 15px 0;">Download the latest release from <a href="https://github.com/ttian226/horizon-new-tab/releases" target="_blank" style="color: #667eea;">GitHub Releases</a></li>
+        <li style="margin: 15px 0;">Download the latest release from <a href="https://github.com/ttian226/horizon-new-tab/releases" target="_blank" style="color: #b45309;">GitHub Releases</a></li>
         <li style="margin: 15px 0;">Extract the zip file to a folder on your computer</li>
-        <li style="margin: 15px 0;">Open Chrome and go to <code style="background: #f0f4ff; padding: 2px 8px; border-radius: 4px;">chrome://extensions/</code></li>
+        <li style="margin: 15px 0;">Open Chrome and go to <code style="background: #fef3c7; padding: 2px 8px; border-radius: 4px;">chrome://extensions/</code></li>
         <li style="margin: 15px 0;">Enable "Developer mode" using the toggle in the top right</li>
         <li style="margin: 15px 0;">Click "Load unpacked" and select the extracted folder</li>
         <li style="margin: 15px 0;">Open a new tab and enjoy Horizon!</li>
@@ -417,7 +507,7 @@
         <li><strong>No tracking:</strong> We don't track your browsing or sell data</li>
         <li><strong>Open source:</strong> Code available on GitHub for transparency</li>
       </ul>
-      <p>Read our full <a href="/privacy-policy.html" style="color: #667eea;">Privacy Policy</a></p>
+      <p>Read our full <a href="/privacy-policy.html" style="color: #b45309;">Privacy Policy</a></p>
     </div>
 
     <!-- Technical Details -->
@@ -449,7 +539,7 @@
       <p>Horizon is open source and welcomes contributions from the community!</p>
 
       <div class="highlight-box">
-        <strong>GitHub Repository:</strong> <a href="https://github.com/ttian226/horizon-new-tab" target="_blank" style="color: #667eea;">github.com/ttian226/horizon-new-tab</a>
+        <strong>GitHub Repository:</strong> <a href="https://github.com/ttian226/horizon-new-tab" target="_blank" style="color: #b45309;">github.com/ttian226/horizon-new-tab</a>
       </div>
 
       <h3>Ways to Contribute</h3>
@@ -466,15 +556,15 @@
       <h2>Get in Touch</h2>
       <p>Have questions, feedback, or need support?</p>
       <ul>
-        <li><strong>Email:</strong> <a href="mailto:ttian226@gmail.com" style="color: #667eea;">ttian226@gmail.com</a></li>
-        <li><strong>GitHub Issues:</strong> <a href="https://github.com/ttian226/horizon-new-tab/issues" target="_blank" style="color: #667eea;">Report a bug or request a feature</a></li>
-        <li><strong>Privacy Policy:</strong> <a href="/privacy-policy.html" style="color: #667eea;">Read our privacy policy</a></li>
+        <li><strong>Email:</strong> <a href="mailto:ttian226@gmail.com" style="color: #b45309;">ttian226@gmail.com</a></li>
+        <li><strong>GitHub Issues:</strong> <a href="https://github.com/ttian226/horizon-new-tab/issues" target="_blank" style="color: #b45309;">Report a bug or request a feature</a></li>
+        <li><strong>Privacy Policy:</strong> <a href="/privacy-policy.html" style="color: #b45309;">Read our privacy policy</a></li>
       </ul>
     </div>
 
     <!-- Footer -->
     <div class="footer">
-      <p><strong>Horizon - Beautiful New Tab</strong></p>
+      <p><strong>Horizon-Tab</strong></p>
       <p>Made with ❤️ for productivity and beauty</p>
       <div class="footer-links">
         <a href="/">Home</a> •

@@ -204,8 +204,13 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
       {/* Todo List */}
       <div className="overflow-y-auto max-h-60 p-2">
         {loading ? (
-          <div className="text-center py-8 text-white/40 text-sm">
-            Loading...
+          <div className="space-y-1 p-1">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-2.5 pl-3 pr-8 py-2 animate-pulse">
+                <div className="w-4 h-4 rounded-[3px] bg-white/10 shrink-0" />
+                <div className="h-4 bg-white/10 rounded w-full" style={{ width: `${65 + i * 10}%` }} />
+              </div>
+            ))}
           </div>
         ) : todos.length === 0 ? (
           <div className="text-center py-8 text-white/40 text-sm">

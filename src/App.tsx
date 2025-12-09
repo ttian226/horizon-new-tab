@@ -24,6 +24,7 @@ import { NotesWidget, TodoWidget, Dock, WidgetId } from './components/Widgets'
 const CLOCK_FORMAT_KEY = 'horizon_clock_format'
 const TODO_PINNED_KEY = 'horizon_todo_pinned'
 const WORK_MODE_KEY = 'horizon_work_mode'
+const ACTIVE_WIDGETS_KEY = 'horizon_active_widgets'
 
 function loadClockFormat(): ClockFormat {
   try {
@@ -75,6 +76,27 @@ function saveWorkMode(enabled: boolean): void {
   }
 }
 
+function loadActiveWidgets(): WidgetId[] {
+  try {
+    const saved = localStorage.getItem(ACTIVE_WIDGETS_KEY)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (Array.isArray(parsed)) return parsed
+    }
+  } catch {
+    // ignore
+  }
+  return []
+}
+
+function saveActiveWidgets(widgets: WidgetId[]): void {
+  try {
+    localStorage.setItem(ACTIVE_WIDGETS_KEY, JSON.stringify(widgets))
+  } catch {
+    // ignore
+  }
+}
+
 function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null)
   const [authLoading, setAuthLoading] = useState(false)
@@ -91,7 +113,7 @@ function App() {
   const [clockFormat, setClockFormat] = useState<ClockFormat>(loadClockFormat)
   const [isTodoPinned, setIsTodoPinned] = useState(loadTodoPinned)
   const [isWorkMode, setIsWorkMode] = useState(loadWorkMode)
-  const [activeWidgets, setActiveWidgets] = useState<WidgetId[]>([])
+  const [activeWidgets, setActiveWidgets] = useState<WidgetId[]>(loadActiveWidgets)
 
   const handleWeatherChange = useCallback((description: string) => {
     setWeatherDescription(description)
@@ -230,29 +252,34 @@ function App() {
     // Clear active widgets when exiting focus mode
     if (!newValue) {
       setActiveWidgets([])
+      saveActiveWidgets([])
     }
   }
 
   const handleToggleWidget = (widgetId: WidgetId) => {
     setActiveWidgets((prev) => {
-      if (prev.includes(widgetId)) {
-        // Remove widget
-        return prev.filter((id) => id !== widgetId)
-      } else {
-        // Add widget (at the end for z-index priority)
-        return [...prev, widgetId]
-      }
+      const newWidgets = prev.includes(widgetId)
+        ? prev.filter((id) => id !== widgetId)
+        : [...prev, widgetId]
+      saveActiveWidgets(newWidgets)
+      return newWidgets
     })
   }
 
   const handleCloseWidget = (widgetId: WidgetId) => {
-    setActiveWidgets((prev) => prev.filter((id) => id !== widgetId))
+    setActiveWidgets((prev) => {
+      const newWidgets = prev.filter((id) => id !== widgetId)
+      saveActiveWidgets(newWidgets)
+      return newWidgets
+    })
   }
 
   const handleBringToFront = (widgetId: WidgetId) => {
     setActiveWidgets((prev) => {
       if (prev[prev.length - 1] === widgetId) return prev // Already on top
-      return [...prev.filter((id) => id !== widgetId), widgetId]
+      const newWidgets = [...prev.filter((id) => id !== widgetId), widgetId]
+      saveActiveWidgets(newWidgets)
+      return newWidgets
     })
   }
 

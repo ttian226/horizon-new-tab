@@ -112,7 +112,14 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
       {/* Todo List - Takes remaining space */}
       <div className="flex-1 overflow-y-auto -mx-4 px-4 min-h-0">
         {loading ? (
-          <div className="text-center py-4 text-white/40 text-sm">Loading...</div>
+          <div className="space-y-1">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-2 py-1.5 animate-pulse">
+                <div className="w-4 h-4 rounded-[3px] bg-white/10 shrink-0" />
+                <div className="h-4 bg-white/10 rounded" style={{ width: `${60 + i * 10}%` }} />
+              </div>
+            ))}
+          </div>
         ) : todos.length === 0 ? (
           <div className="text-center py-4 text-white/40 text-sm">No tasks for today</div>
         ) : (

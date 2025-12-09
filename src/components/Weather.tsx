@@ -441,7 +441,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
     return (
       <div className="flex flex-col items-end text-right px-3 py-2 -mr-3 -mt-2">
         <div className="flex items-center gap-2.5">
-          <span className="font-weather text-3xl leading-none text-white/40">
+          <span className="font-clock text-3xl leading-none text-white/40">
             --°
           </span>
           <CloudSun size={24} className="text-white/40" />
@@ -467,7 +467,7 @@ export default function Weather({ onWeatherChange, userId, refreshTrigger }: Wea
       >
         {/* Row 1: Temperature + Icon */}
         <div className="flex items-center gap-2.5">
-          <span className="font-weather text-3xl leading-none text-white/90">
+          <span className="font-clock text-3xl leading-none text-white/90">
             {displayTemp}°
           </span>
           <WeatherIcon size={24} className="text-white/80" />

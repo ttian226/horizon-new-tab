@@ -195,7 +195,7 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
     >
       <button
         onClick={onToggle}
-        className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+        className={`shrink-0 w-4 h-4 rounded-[3px] border flex items-center justify-center transition-all ${
           todo.completed
             ? 'bg-white/20 border-white/30'
             : 'border-white/20 hover:border-white/40'

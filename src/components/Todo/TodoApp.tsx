@@ -277,35 +277,36 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
 
   return (
     <div
-      className="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+      className="group relative flex items-start gap-2.5 pl-3 pr-8 py-2 rounded-lg hover:bg-white/5 transition-colors"
       onMouseEnter={() => setShowDelete(true)}
       onMouseLeave={() => setShowDelete(false)}
     >
-      {/* Checkbox */}
+      {/* Checkbox - small rounded square for modern look */}
       <button
         onClick={onToggle}
-        className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+        className={`mt-px shrink-0 w-4 h-4 rounded-[3px] border flex items-center justify-center transition-all ${
           todo.completed
             ? 'bg-white/20 border-white/30'
             : 'border-white/20 hover:border-white/40'
         }`}
       >
-        {todo.completed && <Check size={12} className="text-white/70" />}
+        {todo.completed && <Check size={10} className="text-white/70" />}
       </button>
 
-      {/* Text */}
+      {/* Text - max 2 lines with ellipsis */}
       <span
-        className={`flex-1 text-sm transition-all ${
+        className={`flex-1 text-sm leading-snug break-words line-clamp-2 transition-all ${
           todo.completed ? 'text-white/30 line-through' : 'text-white/80'
         }`}
+        title={todo.text}
       >
         {todo.text}
       </span>
 
-      {/* Delete Button */}
+      {/* Delete Button - absolute positioned to not squeeze text */}
       <button
         onClick={onDelete}
-        className={`text-white/30 hover:text-red-400 transition-all ${
+        className={`absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-red-400 transition-all ${
           showDelete ? 'opacity-100' : 'opacity-0'
         }`}
       >

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Horizon New Tab",
+  "name": "Horizon Tab",
   "version": "0.1.0",
   "description": "Beautiful new tab page with focus tools, weather, and daily inspiration",
   "icons": {

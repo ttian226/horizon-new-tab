@@ -1,5 +1,5 @@
 // Authentication Service - Firebase Auth
-// Supports Google Sign-in for premium features sync
+// Supports Google Sign-in for cloud sync (todos, favorites, settings)
 // Uses chrome.identity API for Manifest V3 compatibility (avoids CSP issues)
 
 import {

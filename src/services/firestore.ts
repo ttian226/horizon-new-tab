@@ -1,5 +1,5 @@
 // Firestore Service - Cloud Database
-// Used for: User settings sync, Todo sync (premium), Membership status
+// Used for: User settings sync, Todo sync, Favorites
 
 import {
   doc,
@@ -57,14 +57,10 @@ export interface TodoList {
   createdAt: Date
 }
 
-// Membership interface
-export interface Membership {
-  isPro: boolean
-  plan: 'free' | 'pro'
-  expiresAt?: Date | null
-  subscribedAt?: Date | null
-  maxFavorites: number // 9 for free, -1 for unlimited
-  maxTodoLists: number // 1 for free, -1 for unlimited
+// User limits configuration
+export interface UserLimits {
+  maxFavorites: number // Maximum number of favorite wallpapers
+  maxTodoLists: number // Maximum number of todo lists
 }
 
 // ============ User Settings ============
@@ -175,38 +171,16 @@ export async function updateClockFormat(
   }
 }
 
-// ============ Membership ============
+// ============ User Limits ============
 
-const DEFAULT_FREE_MEMBERSHIP: Membership = {
-  isPro: false,
-  plan: 'free',
-  expiresAt: null,
-  subscribedAt: null,
+// Default limits for all users
+const DEFAULT_USER_LIMITS: UserLimits = {
   maxFavorites: 9,
   maxTodoLists: 1,
 }
 
-export async function getMembership(userId: string): Promise<Membership> {
-  const docRef = doc(db, 'users', userId, 'membership', 'info')
-  const docSnap = await getDoc(docRef)
-  if (docSnap.exists()) {
-    const data = docSnap.data()
-    return {
-      isPro: data.isPro ?? false,
-      plan: data.plan ?? 'free',
-      expiresAt: data.expiresAt?.toDate() ?? null,
-      subscribedAt: data.subscribedAt?.toDate() ?? null,
-      maxFavorites: data.maxFavorites ?? 9,
-      maxTodoLists: data.maxTodoLists ?? 1,
-    }
-  }
-  // Default free membership - also initialize in Firestore
-  await setDoc(docRef, {
-    ...DEFAULT_FREE_MEMBERSHIP,
-    expiresAt: null,
-    subscribedAt: null,
-  })
-  return DEFAULT_FREE_MEMBERSHIP
+export function getUserLimits(): UserLimits {
+  return DEFAULT_USER_LIMITS
 }
 
 // ============ Todo Lists ============
@@ -384,15 +358,12 @@ export async function getFavoritesCount(userId: string): Promise<number> {
   return snapshot.size
 }
 
-// Check if user can add more favorites (based on membership)
+// Check if user can add more favorites (based on limits)
 export async function canAddFavorite(userId: string): Promise<boolean> {
-  const membership = await getMembership(userId)
+  const limits = getUserLimits()
   const currentCount = await getFavoritesCount(userId)
 
-  // -1 means unlimited
-  if (membership.maxFavorites === -1) return true
-
-  return currentCount < membership.maxFavorites
+  return currentCount < limits.maxFavorites
 }
 
 // Subscribe to favorites with realtime updates

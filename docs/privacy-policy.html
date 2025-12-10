@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horizon-Tab - Privacy Policy</title>
+  <title>Privacy Policy - Horizon New Tab</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -15,349 +15,662 @@
       box-sizing: border-box;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
-      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
       line-height: 1.6;
-      color: #44403c;
-      background-color: #FAFAF9;
-      background-image:
-        radial-gradient(circle at 50% 20%, rgba(255,255,255,0.8) 0%, transparent 50%),
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+      color: #ffffff;
       min-height: 100vh;
-      padding: 40px 20px;
+      overflow-x: hidden;
     }
 
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: rgba(255, 252, 248, 0.85);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 24px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      padding: 60px 48px;
+    /* Immersive Background */
+    .bg-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=2070&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      z-index: -2;
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-      padding-bottom: 32px;
-      border-bottom: 1px solid rgba(217, 119, 6, 0.1);
-    }
-
-    .header h1 {
-      font-size: 2.5em;
-      font-weight: 600;
-      color: #d97706;
-      margin-bottom: 8px;
-    }
-
-    .header .subtitle {
-      font-size: 1.1em;
-      color: #78716c;
-      margin-bottom: 12px;
-    }
-
-    .header .date {
-      font-size: 0.9em;
-      color: #a8a29e;
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.3) 0%,
+        rgba(0, 0, 0, 0.4) 50%,
+        rgba(0, 0, 0, 0.5) 100%
+      );
+      z-index: -1;
     }
 
     .content {
-      padding: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 100;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .logo img {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: #fff;
+    }
+
+    .nav-links .cta-btn {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 10px 20px;
+      border-radius: 24px;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.2s;
+    }
+
+    .nav-links .cta-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Hero Section */
+    .hero {
+      min-height: 40vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 140px 20px 60px;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .hero .subtitle {
+      font-size: 1.25rem;
+      color: rgba(255, 255, 255, 0.8);
+      max-width: 600px;
+      margin-bottom: 12px;
+    }
+
+    .hero .date {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Main Content */
+    .main-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    /* Glass Card */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 48px;
+      margin-bottom: 32px;
+    }
+
+    /* Highlight Box */
+    .highlight {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
+      padding: 24px 28px;
+      border-left: 4px solid #fbbf24;
+      border-radius: 0 16px 16px 0;
+      margin-bottom: 32px;
+    }
+
+    .highlight strong {
+      color: #fbbf24;
+    }
+
+    .highlight ul {
+      margin-top: 12px;
+      margin-bottom: 0;
+    }
+
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(251, 191, 36, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
     }
 
     h2 {
-      color: #292524;
-      margin-top: 40px;
-      margin-bottom: 16px;
-      font-size: 1.5em;
+      font-size: 1.5rem;
       font-weight: 600;
-    }
-
-    h2:first-of-type {
-      margin-top: 0;
+      color: #fff;
     }
 
     h3 {
-      color: #44403c;
-      margin-top: 24px;
-      margin-bottom: 12px;
-      font-size: 1.15em;
+      font-size: 1.15rem;
       font-weight: 500;
+      color: rgba(255, 255, 255, 0.95);
+      margin-top: 28px;
+      margin-bottom: 12px;
     }
 
     p {
-      margin-bottom: 14px;
-      color: #57534e;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 16px;
       line-height: 1.7;
     }
 
     ul {
-      margin: 12px 0 16px 24px;
+      margin: 12px 0 20px 24px;
     }
 
     li {
-      margin-bottom: 8px;
-      color: #57534e;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 10px;
       line-height: 1.6;
     }
 
-    .highlight {
-      background: linear-gradient(135deg, #fef7ed 0%, #fff7ed 100%);
-      padding: 20px 24px;
-      border-left: 4px solid #f59e0b;
-      border-radius: 0 12px 12px 0;
-      margin: 24px 0;
-    }
-
-    .highlight strong {
-      color: #b45309;
-    }
-
-    .footer {
-      margin-top: 48px;
-      padding-top: 32px;
-      border-top: 1px solid rgba(217, 119, 6, 0.1);
-      text-align: center;
-      color: #78716c;
-    }
-
-    .footer p {
-      color: #78716c;
-      margin-bottom: 8px;
-    }
-
-    .footer-links {
-      margin-top: 16px;
-      font-size: 0.9em;
-    }
-
-    .footer-links a {
-      margin: 0 8px;
+    li strong {
+      color: rgba(255, 255, 255, 0.95);
     }
 
     a {
-      color: #d97706;
+      color: #fbbf24;
       text-decoration: none;
       transition: color 0.2s;
     }
 
     a:hover {
-      color: #b45309;
+      color: #fcd34d;
       text-decoration: underline;
     }
 
     code {
-      background: rgba(217, 119, 6, 0.1);
-      padding: 2px 8px;
+      background: rgba(251, 191, 36, 0.15);
+      padding: 3px 10px;
       border-radius: 6px;
       font-size: 0.9em;
-      color: #b45309;
+      color: #fbbf24;
     }
 
+    em {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Services Grid */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .service-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .service-card h4 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .service-card p {
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+
+    .service-card ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .service-card li {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    /* Footer */
+    footer {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 48px 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-brand img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
+
+    .footer-brand span {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 32px;
+    }
+
+    .footer-links a {
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: #fff;
+    }
+
+    .footer-copy {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.85rem;
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
-      .container {
-        padding: 40px 20px;
+      nav {
+        padding: 16px 20px;
       }
 
-      .header h1 {
-        font-size: 2em;
+      .nav-links {
+        display: none;
       }
 
-      h2 {
-        font-size: 1.3em;
-        margin-top: 32px;
+      .hero {
+        padding: 120px 20px 40px;
       }
 
-      h3 {
-        font-size: 1.1em;
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+
+      .glass-card {
+        padding: 32px 24px;
+      }
+
+      .footer-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Privacy Policy</h1>
-      <p class="subtitle">Horizon-Tab</p>
-      <p class="date">Last Updated: December 8, 2025</p>
-    </div>
+  <!-- Background -->
+  <div class="bg-image"></div>
+  <div class="bg-overlay"></div>
 
-    <div class="content">
-      <div class="highlight">
-        <strong>TL;DR:</strong> We respect your privacy. Most data stays on your device. If you choose to sign in, we sync your preferences securely to Firebase. We never sell your data or show ads.
+  <!-- Content -->
+  <div class="content">
+    <!-- Navigation -->
+    <nav>
+      <a href="index.html" class="logo">
+        <img src="icons/icon-48.png" alt="Horizon">
+        Horizon
+      </a>
+      <div class="nav-links">
+        <a href="index.html#features">Features</a>
+        <a href="index.html#screenshots">Screenshots</a>
+        <a href="https://github.com/nichelicorn/horizon-new-tab" target="_blank">GitHub</a>
+        <a href="#" class="cta-btn">Install Free</a>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <h1>Privacy Policy</h1>
+      <p class="subtitle">Your privacy matters. Here's how we protect it.</p>
+      <p class="date">Last Updated: December 8, 2025</p>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- TL;DR -->
+      <div class="glass-card">
+        <div class="highlight">
+          <strong>TL;DR:</strong> We respect your privacy. Most data stays on your device. If you choose to sign in, we sync your preferences securely to Firebase. We never sell your data or show ads.
+        </div>
+
+        <div class="section-header">
+          <div class="section-icon">&#128220;</div>
+          <h2>Introduction</h2>
+        </div>
+        <p>Horizon New Tab ("we", "our", or "the extension") is committed to protecting your privacy. This policy explains how we collect, use, and protect your information when you use our Chrome extension.</p>
       </div>
 
-      <h2>Introduction</h2>
-      <p>Horizon-Tab ("we", "our", or "the extension") is committed to protecting your privacy. This policy explains how we collect, use, and protect your information when you use our Chrome extension.</p>
+      <!-- Information We Collect -->
+      <div class="glass-card">
+        <div class="section-header">
+          <div class="section-icon">&#128202;</div>
+          <h2>Information We Collect</h2>
+        </div>
 
-      <h2>Information We Collect</h2>
+        <h3>Local Storage (No Account Required)</h3>
+        <p>The following data is stored locally on your device and never leaves your computer unless you choose to sign in:</p>
+        <ul>
+          <li><strong>Weather preferences:</strong> Your chosen location (city, coordinates) and whether you use automatic location detection</li>
+          <li><strong>UI settings:</strong> Clock format (12h/24h), temperature unit, display preferences</li>
+          <li><strong>Favorite wallpapers:</strong> URLs and metadata of images you've favorited (cached locally)</li>
+          <li><strong>Todo items & Notes:</strong> Your tasks and notes (stored locally unless synced)</li>
+        </ul>
+        <p><em>This data is stored in your browser's local storage and is never transmitted to our servers unless you sign in.</em></p>
 
-      <h3>Local Storage (No Account Required)</h3>
-      <p>The following data is stored locally on your device and never leaves your computer unless you choose to sign in:</p>
-      <ul>
-        <li><strong>Weather preferences:</strong> Your chosen location (city, coordinates) and whether you use automatic location detection</li>
-        <li><strong>UI settings:</strong> Clock format (12h/24h), display preferences</li>
-        <li><strong>Favorite wallpapers:</strong> URLs and metadata of images you've favorited (cached locally)</li>
-      </ul>
-      <p><em>This data is stored in your browser's local storage and is never transmitted to our servers unless you sign in.</em></p>
-
-      <h3>Cloud Storage (Optional - When Signed In)</h3>
-      <p>If you choose to sign in with your Google account, we store the following in Firebase (Google's cloud database):</p>
-      <ul>
-        <li><strong>Account information:</strong> Email address, display name, and profile photo from your Google account</li>
-        <li><strong>Synced preferences:</strong> Weather settings, UI preferences</li>
-        <li><strong>Favorite wallpapers:</strong> Your saved wallpaper collection (up to 9 for free users)</li>
-        <li><strong>Todo items:</strong> Your tasks and lists (if you use this feature)</li>
-        <li><strong>Custom nickname:</strong> If you set a personalized greeting name</li>
-      </ul>
-
-      <h2>How We Use Your Information</h2>
-      <p>We use your information solely to:</p>
-      <ul>
-        <li>Provide and maintain the extension's functionality</li>
-        <li>Display accurate weather information for your location</li>
-        <li>Sync your preferences across devices (if signed in)</li>
-        <li>Personalize your experience with custom greetings</li>
-        <li>Remember your favorite wallpapers and settings</li>
-      </ul>
-
-      <div class="highlight">
-        <strong>We DO NOT:</strong>
-        <ul style="margin-top: 10px;">
-          <li>Sell your personal information to third parties</li>
-          <li>Use your data for advertising purposes</li>
-          <li>Track your browsing history</li>
-          <li>Share your information with anyone except as described in this policy</li>
+        <h3>Cloud Storage (Optional - When Signed In)</h3>
+        <p>If you choose to sign in with your Google account, we store the following in Firebase (Google's cloud database):</p>
+        <ul>
+          <li><strong>Account information:</strong> Email address, display name, and profile photo from your Google account</li>
+          <li><strong>Synced preferences:</strong> Weather settings, UI preferences</li>
+          <li><strong>Favorite wallpapers:</strong> Your saved wallpaper collection (up to 9 for free users)</li>
+          <li><strong>Todo items:</strong> Your tasks and lists (if you use this feature)</li>
+          <li><strong>Custom nickname:</strong> If you set a personalized greeting name</li>
         </ul>
       </div>
 
-      <h2>Third-Party Services</h2>
-      <p>We use the following third-party services to provide our functionality:</p>
+      <!-- How We Use Your Information -->
+      <div class="glass-card">
+        <div class="section-header">
+          <div class="section-icon">&#128161;</div>
+          <h2>How We Use Your Information</h2>
+        </div>
+        <p>We use your information solely to:</p>
+        <ul>
+          <li>Provide and maintain the extension's functionality</li>
+          <li>Display accurate weather information for your location</li>
+          <li>Sync your preferences across devices (if signed in)</li>
+          <li>Personalize your experience with custom greetings</li>
+          <li>Remember your favorite wallpapers and settings</li>
+        </ul>
 
-      <h3>Firebase (Google)</h3>
-      <ul>
-        <li><strong>Purpose:</strong> Authentication and cloud data storage (optional)</li>
-        <li><strong>What they receive:</strong> Your Google account information, synced preferences</li>
-        <li><strong>Privacy policy:</strong> <a href="https://firebase.google.com/support/privacy" target="_blank">Firebase Privacy Policy</a></li>
-      </ul>
-
-      <h3>Open-Meteo Weather API</h3>
-      <ul>
-        <li><strong>Purpose:</strong> Fetch weather data for your location</li>
-        <li><strong>What they receive:</strong> GPS coordinates (latitude/longitude) or city name</li>
-        <li><strong>Personal data:</strong> None. Weather API requests are anonymous</li>
-        <li><strong>Website:</strong> <a href="https://open-meteo.com/" target="_blank">open-meteo.com</a></li>
-      </ul>
-
-      <h3>OpenStreetMap Nominatim</h3>
-      <ul>
-        <li><strong>Purpose:</strong> Convert GPS coordinates to city names</li>
-        <li><strong>What they receive:</strong> GPS coordinates</li>
-        <li><strong>Personal data:</strong> None. Requests are anonymous</li>
-        <li><strong>Privacy policy:</strong> <a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy" target="_blank">OSM Privacy Policy</a></li>
-      </ul>
-
-      <h3>Unsplash</h3>
-      <ul>
-        <li><strong>Purpose:</strong> Provide high-quality wallpaper images</li>
-        <li><strong>What they receive:</strong> None. We use their public API</li>
-        <li><strong>Personal data:</strong> None</li>
-        <li><strong>Privacy policy:</strong> <a href="https://unsplash.com/privacy" target="_blank">Unsplash Privacy Policy</a></li>
-      </ul>
-
-      <h2>Data Security</h2>
-      <p>We implement appropriate security measures to protect your data:</p>
-      <ul>
-        <li><strong>Encryption in transit:</strong> All cloud data is transmitted over HTTPS</li>
-        <li><strong>Firebase security rules:</strong> Your data is protected by strict access rules - only you can access your own data</li>
-        <li><strong>No third-party access:</strong> We do not share your data with advertisers or data brokers</li>
-        <li><strong>Secure authentication:</strong> Google's OAuth is used for sign-in (we never see your password)</li>
-      </ul>
-
-      <h2>Your Rights and Choices</h2>
-
-      <h3>Use Without an Account</h3>
-      <p>You can use Horizon New Tab completely offline without signing in. All features except cloud sync work without an account.</p>
-
-      <h3>Access Your Data</h3>
-      <p>If signed in, you can view all your data in Firebase:</p>
-      <ul>
-        <li>Your preferences are visible in the settings panel</li>
-        <li>Your favorites are visible in the settings modal</li>
-        <li>Your todos are visible in the todo panel</li>
-      </ul>
-
-      <h3>Delete Your Data</h3>
-      <p>You have the right to delete your data at any time:</p>
-      <ul>
-        <li><strong>Local data:</strong> Clear your browser's local storage or uninstall the extension</li>
-        <li><strong>Cloud data:</strong> Sign out and contact us to delete your cloud data</li>
-        <li><strong>Account deletion:</strong> Contact us to permanently delete your account and all associated data</li>
-      </ul>
-
-      <h3>Export Your Data</h3>
-      <p>Contact us to request a copy of your data in a portable format.</p>
-
-      <h2>Browser Permissions</h2>
-      <p>Our extension requests the following permissions:</p>
-
-      <h3>Storage Permission</h3>
-      <p><strong>Why we need it:</strong> To save your preferences, weather settings, and favorite wallpapers locally on your device for instant loading.</p>
-
-      <h3>Alarms Permission</h3>
-      <p><strong>Why we need it:</strong> To schedule automatic wallpaper updates and weather data refresh in the background (e.g., every 30 minutes).</p>
-
-      <h3>Host Permissions</h3>
-      <p>We request access to specific domains only:</p>
-      <ul>
-        <li><code>api.open-meteo.com</code> - Weather data</li>
-        <li><code>nominatim.openstreetmap.org</code> - Location names</li>
-        <li><code>firestore.googleapis.com</code> - Cloud sync (optional)</li>
-      </ul>
-      <p><em>We do not request access to browse all websites or track your browsing history.</em></p>
-
-      <h2>Children's Privacy</h2>
-      <p>Our extension is not directed to children under 13 years of age. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us.</p>
-
-      <h2>International Users</h2>
-      <p>Your information may be transferred to and maintained on servers located outside of your state, province, country, or other governmental jurisdiction where privacy laws may differ from those in your jurisdiction.</p>
-
-      <h2>Changes to This Privacy Policy</h2>
-      <p>We may update this privacy policy from time to time to reflect changes in our practices or for legal reasons. We will notify you of any changes by:</p>
-      <ul>
-        <li>Updating the "Last Updated" date at the top of this policy</li>
-        <li>Displaying a notice in the extension (for significant changes)</li>
-      </ul>
-      <p>We encourage you to review this privacy policy periodically.</p>
-
-      <h2>Contact Us</h2>
-      <p>If you have any questions, concerns, or requests regarding this privacy policy or your data, please contact us at:</p>
-      <ul>
-        <li><strong>Email:</strong> ttian226@gmail.com</li>
-        <li><strong>GitHub:</strong> <a href="https://github.com/ttian226/horizon-new-tab" target="_blank">github.com/ttian226/horizon-new-tab</a></li>
-      </ul>
-
-      <h2>Legal Compliance</h2>
-      <p>This privacy policy complies with:</p>
-      <ul>
-        <li>General Data Protection Regulation (GDPR) for European users</li>
-        <li>California Consumer Privacy Act (CCPA) for California users</li>
-        <li>Chrome Web Store Developer Program Policies</li>
-      </ul>
-    </div>
-
-    <div class="footer">
-      <p><strong>Horizon-Tab</strong></p>
-      <p>Made with ❤️ for productivity and beauty</p>
-      <div class="footer-links">
-        <a href="/">Home</a> •
-        <a href="https://github.com/ttian226/horizon-new-tab" target="_blank">GitHub</a> •
-        <a href="mailto:ttian226@gmail.com">Contact</a>
+        <div class="highlight">
+          <strong>We DO NOT:</strong>
+          <ul>
+            <li>Sell your personal information to third parties</li>
+            <li>Use your data for advertising purposes</li>
+            <li>Track your browsing history</li>
+            <li>Share your information with anyone except as described in this policy</li>
+          </ul>
+        </div>
       </div>
-    </div>
+
+      <!-- Third-Party Services -->
+      <div class="glass-card">
+        <div class="section-header">
+          <div class="section-icon">&#128279;</div>
+          <h2>Third-Party Services</h2>
+        </div>
+        <p>We use the following third-party services to provide our functionality:</p>
+
+        <div class="services-grid">
+          <div class="service-card">
+            <h4>&#128293; Firebase (Google)</h4>
+            <p><strong>Purpose:</strong> Authentication and cloud data storage (optional)</p>
+            <ul>
+              <li>Receives: Google account info, synced preferences</li>
+              <li><a href="https://firebase.google.com/support/privacy" target="_blank">Privacy Policy</a></li>
+            </ul>
+          </div>
+          <div class="service-card">
+            <h4>&#127780; Open-Meteo Weather API</h4>
+            <p><strong>Purpose:</strong> Fetch weather data for your location</p>
+            <ul>
+              <li>Receives: GPS coordinates or city name</li>
+              <li>Anonymous requests, no personal data</li>
+              <li><a href="https://open-meteo.com/" target="_blank">Website</a></li>
+            </ul>
+          </div>
+          <div class="service-card">
+            <h4>&#127758; OpenStreetMap Nominatim</h4>
+            <p><strong>Purpose:</strong> Convert GPS coordinates to city names</p>
+            <ul>
+              <li>Receives: GPS coordinates</li>
+              <li>Anonymous requests</li>
+              <li><a href="https://wiki.osmfoundation.org/wiki/Privacy_Policy" target="_blank">Privacy Policy</a></li>
+            </ul>
+          </div>
+          <div class="service-card">
+            <h4>&#128247; Unsplash</h4>
+            <p><strong>Purpose:</strong> Provide high-quality wallpaper images</p>
+            <ul>
+              <li>Receives: None (public API)</li>
+              <li><a href="https://unsplash.com/privacy" target="_blank">Privacy Policy</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Security -->
+      <div class="glass-card">
+        <div class="section-header">
+          <div class="section-icon">&#128274;</div>
+          <h2>Data Security</h2>
+        </div>
+        <p>We implement appropriate security measures to protect your data:</p>
+        <ul>
+          <li><strong>Encryption in transit:</strong> All cloud data is transmitted over HTTPS</li>
+          <li><strong>Firebase security rules:</strong> Your data is protected by strict access rules - only you can access your own data</li>
+          <li><strong>No third-party access:</strong> We do not share your data with advertisers or data brokers</li>
+          <li><strong>Secure authentication:</strong> Google's OAuth is used for sign-in (we never see your password)</li>
+        </ul>
+      </div>
+
+      <!-- Your Rights and Choices -->
+      <div class="glass-card">
+        <div class="section-header">
+          <div class="section-icon">&#9989;</div>
+          <h2>Your Rights and Choices</h2>
+        </div>
+
+        <h3>Use Without an Account</h3>
+        <p>You can use Horizon New Tab completely offline without signing in. All features except cloud sync work without an account.</p>
+
+        <h3>Access Your Data</h3>
+        <p>If signed in, you can view all your data directly:</p>
+        <ul>
+          <li>Your preferences are visible in the settings panel</li>
+          <li>Your favorites are visible in the settings modal</li>
+          <li>Your todos are visible in the todo panel</li>
+        </ul>
+
+        <h3>Delete Your Data</h3>
+        <p>You have the right to delete your data at any time:</p>
+        <ul>
+          <li><strong>Local data:</strong> Clear your browser's local storage or uninstall the extension</li>
+          <li><strong>Cloud data:</strong> Sign out and contact us to delete your cloud data</li>
+          <li><strong>Account deletion:</strong> Contact us to permanently delete your account and all associated data</li>
+        </ul>
+
+        <h3>Export Your Data</h3>
+        <p>Contact us to request a copy of your data in a portable format.</p>
+      </div>
+
+      <!-- Browser Permissions -->
+      <div class="glass-card">
+        <div class="section-header">
+          <div class="section-icon">&#128736;</div>
+          <h2>Browser Permissions</h2>
+        </div>
+        <p>Our extension requests the following permissions:</p>
+
+        <h3>Storage Permission</h3>
+        <p><strong>Why we need it:</strong> To save your preferences, weather settings, and favorite wallpapers locally on your device for instant loading.</p>
+
+        <h3>Alarms Permission</h3>
+        <p><strong>Why we need it:</strong> To schedule automatic wallpaper updates and weather data refresh in the background (e.g., every 30 minutes).</p>
+
+        <h3>Host Permissions</h3>
+        <p>We request access to specific domains only:</p>
+        <ul>
+          <li><code>api.open-meteo.com</code> - Weather data</li>
+          <li><code>nominatim.openstreetmap.org</code> - Location names</li>
+          <li><code>firestore.googleapis.com</code> - Cloud sync (optional)</li>
+        </ul>
+        <p><em>We do not request access to browse all websites or track your browsing history.</em></p>
+      </div>
+
+      <!-- Additional Policies -->
+      <div class="glass-card">
+        <div class="section-header">
+          <div class="section-icon">&#128221;</div>
+          <h2>Additional Policies</h2>
+        </div>
+
+        <h3>Children's Privacy</h3>
+        <p>Our extension is not directed to children under 13 years of age. We do not knowingly collect personal information from children under 13. If you are a parent or guardian and believe your child has provided us with personal information, please contact us.</p>
+
+        <h3>International Users</h3>
+        <p>Your information may be transferred to and maintained on servers located outside of your state, province, country, or other governmental jurisdiction where privacy laws may differ from those in your jurisdiction.</p>
+
+        <h3>Changes to This Privacy Policy</h3>
+        <p>We may update this privacy policy from time to time. We will notify you of any changes by:</p>
+        <ul>
+          <li>Updating the "Last Updated" date at the top of this policy</li>
+          <li>Displaying a notice in the extension (for significant changes)</li>
+        </ul>
+      </div>
+
+      <!-- Contact & Compliance -->
+      <div class="glass-card">
+        <div class="section-header">
+          <div class="section-icon">&#128231;</div>
+          <h2>Contact Us</h2>
+        </div>
+        <p>If you have any questions, concerns, or requests regarding this privacy policy or your data, please contact us at:</p>
+        <ul>
+          <li><strong>Email:</strong> <a href="mailto:ttian226@gmail.com">ttian226@gmail.com</a></li>
+          <li><strong>GitHub:</strong> <a href="https://github.com/nichelicorn/horizon-new-tab" target="_blank">github.com/nichelicorn/horizon-new-tab</a></li>
+        </ul>
+
+        <h3>Legal Compliance</h3>
+        <p>This privacy policy complies with:</p>
+        <ul>
+          <li>General Data Protection Regulation (GDPR) for European users</li>
+          <li>California Consumer Privacy Act (CCPA) for California users</li>
+          <li>Chrome Web Store Developer Program Policies</li>
+        </ul>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="footer-brand">
+          <img src="icons/icon-48.png" alt="Horizon">
+          <span>Horizon New Tab</span>
+        </div>
+        <div class="footer-links">
+          <a href="index.html">Home</a>
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="https://github.com/nichelicorn/horizon-new-tab" target="_blank">GitHub</a>
+          <a href="mailto:ttian226@gmail.com">Contact</a>
+        </div>
+        <div class="footer-copy">
+          &copy; 2025 Horizon New Tab. All rights reserved.
+        </div>
+      </div>
+    </footer>
   </div>
 </body>
 </html>

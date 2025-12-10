@@ -3,615 +3,531 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horizon-Tab - Beautiful New Tab for Chrome</title>
+  <title>Horizon Tab - Beautiful New Tab for Chrome</title>
   <meta name="description" content="Transform your Chrome new tab into a beautiful, productive workspace with stunning wallpapers, weather, clock, and focus tools.">
   <link rel="icon" type="image/png" href="favicon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Playfair Display', 'Georgia', 'serif'],
+          },
+          animation: {
+            'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+          },
+        },
+      },
+    }
+  </script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      line-height: 1.6;
-      color: #44403c;
-      background-color: #FAFAF9;
-      background-image:
-        radial-gradient(circle at 50% 30%, rgba(255,255,255,0.8) 0%, transparent 50%),
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
-      min-height: 100vh;
-      padding: 40px 20px;
+      font-family: 'Inter', system-ui, sans-serif;
     }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .hero {
-      text-align: center;
-      color: #5c4a3d;
-      padding: 80px 20px;
-      margin-bottom: 40px;
-    }
-
-    .hero-logo {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .hero-icon-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .hero-icon-glass {
-      width: 100px;
-      height: 100px;
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.08),
-        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .hero-icon-glow {
-      position: absolute;
-      width: 140px;
-      height: 140px;
-      background: radial-gradient(circle, rgba(217, 119, 6, 0.15) 0%, transparent 70%);
-      border-radius: 50%;
-      z-index: -1;
-    }
-
-    .hero-icon {
-      width: 72px;
-      height: 72px;
-      filter: drop-shadow(0 4px 12px rgba(217, 119, 6, 0.2));
-    }
-
-    .hero h1 {
-      font-size: 3.5em;
-      font-weight: 300;
-      margin: 0;
-      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    .hero .tagline {
-      font-size: 1.5em;
-      opacity: 0.95;
-      margin-bottom: 40px;
-      font-weight: 300;
-    }
-
-    .cta-buttons {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 40px;
-    }
-
-    .btn {
-      display: inline-block;
-      padding: 15px 40px;
-      border-radius: 30px;
-      text-decoration: none;
-      font-size: 1.1em;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      background: #d97706;
-      color: white;
-      box-shadow: 0 4px 15px rgba(217, 119, 6, 0.3);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      background: #b45309;
-      box-shadow: 0 6px 25px rgba(217, 119, 6, 0.4);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: #5c4a3d;
-      border: 2px solid #d97706;
-    }
-
-    .btn-secondary:hover {
-      background: rgba(217, 119, 6, 0.1);
-    }
-
-    .features {
-      background: rgba(255, 252, 248, 0.85);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 24px;
-      padding: 60px 40px;
-      margin-bottom: 40px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-    }
-
-    .features h2 {
-      text-align: center;
-      font-size: 2.5em;
-      color: #b45309;
-      margin-bottom: 50px;
-      font-weight: 300;
-    }
-
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 40px;
-      margin-top: 40px;
-    }
-
-    .feature-card {
-      text-align: center;
-      padding: 30px;
-      border-radius: 12px;
-      transition: transform 0.3s ease;
-    }
-
-    .feature-card:hover {
-      transform: translateY(-5px);
-      background: rgba(255, 255, 255, 0.5);
-    }
-
-    .feature-icon {
-      font-size: 3em;
-      margin-bottom: 20px;
-    }
-
-    .feature-card h3 {
-      color: #b45309;
-      font-size: 1.5em;
-      margin-bottom: 15px;
-      font-weight: 500;
-    }
-
-    .feature-card p {
-      color: #666;
-      line-height: 1.8;
-    }
-
-    .screenshot {
-      background: rgba(255, 252, 248, 0.85);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 24px;
-      padding: 40px;
-      margin-bottom: 40px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      text-align: center;
-    }
-
-    .screenshot h2 {
-      color: #b45309;
-      font-size: 2em;
-      margin-bottom: 30px;
-      font-weight: 300;
-    }
-
-    .screenshot-placeholder {
-      background: linear-gradient(135deg, #fbbf24 0%, #fb923c 100%);
-      border-radius: 12px;
-      padding: 80px 20px;
-      color: white;
-      font-size: 1.2em;
-      opacity: 0.9;
-    }
-
-    .info-section {
-      background: rgba(255, 252, 248, 0.85);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 24px;
-      padding: 60px 40px;
-      margin-bottom: 40px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-    }
-
-    .info-section h2 {
-      color: #b45309;
-      font-size: 2em;
-      margin-bottom: 30px;
-      font-weight: 300;
-    }
-
-    .info-section h3 {
-      color: #555;
-      font-size: 1.4em;
-      margin-top: 30px;
-      margin-bottom: 15px;
-      font-weight: 500;
-    }
-
-    .info-section p {
-      color: #666;
-      margin-bottom: 15px;
-      line-height: 1.8;
-    }
-
-    .info-section ul {
-      margin: 15px 0 15px 30px;
-    }
-
-    .info-section li {
-      color: #666;
-      margin-bottom: 10px;
-    }
-
-    .highlight-box {
-      background: #fef3c7;
-      padding: 25px;
-      border-left: 4px solid #d97706;
-      border-radius: 4px;
-      margin: 25px 0;
-    }
-
-    .footer {
-      background: rgba(255, 252, 248, 0.85);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 24px;
-      padding: 40px;
-      text-align: center;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-    }
-
-    .footer p {
-      color: #666;
-      margin: 10px 0;
-    }
-
-    .footer-links {
-      margin-top: 20px;
-      font-size: 0.9em;
-    }
-
-    .footer-links a {
-      color: #b45309;
-      text-decoration: none;
-      margin: 0 10px;
-    }
-
-    .footer-links a:hover {
-      text-decoration: underline;
-    }
-
-    .badge {
-      display: inline-block;
-      background: #d97706;
-      color: white;
-      padding: 5px 15px;
-      border-radius: 20px;
-      font-size: 0.9em;
-      margin: 5px;
-    }
-
-    @media (max-width: 768px) {
-      .hero-icon-glass {
-        width: 80px;
-        height: 80px;
-        border-radius: 20px;
-      }
-
-      .hero-icon {
-        width: 56px;
-        height: 56px;
-      }
-
-      .hero-icon-glow {
-        width: 110px;
-        height: 110px;
-      }
-
-      .hero h1 {
-        font-size: 2.2em;
-      }
-
-      .hero .tagline {
-        font-size: 1.2em;
-      }
-
-      .features,
-      .info-section {
-        padding: 40px 20px;
-      }
-
-      .feature-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .cta-buttons {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .btn {
-        width: 100%;
-        max-width: 300px;
-      }
+    .bg-image {
+      background-image: url('https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=2070&auto=format&fit=crop');
     }
   </style>
 </head>
-<body>
-  <div class="container">
+<body class="min-h-screen bg-neutral-900 font-sans selection:bg-amber-500/30 selection:text-amber-200">
+  <!-- Immersive Background -->
+  <div class="bg-image fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-60"></div>
+  <div class="fixed inset-0 z-0 bg-gradient-to-b from-black/30 via-transparent to-black/80 pointer-events-none"></div>
+
+  <!-- Content Wrapper -->
+  <div class="relative z-10 flex flex-col min-h-screen">
+    <!-- Navigation -->
+    <nav class="flex justify-between items-center px-6 py-6 max-w-7xl mx-auto w-full">
+      <a href="index.html" class="flex items-center gap-2 cursor-pointer group">
+        <div class="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+          <span class="text-amber-500 font-bold">H</span>
+        </div>
+        <span class="text-white font-medium tracking-wide">Horizon Tab</span>
+      </a>
+      <div class="hidden sm:flex gap-6">
+        <a href="#features" class="text-white/70 hover:text-white transition-colors">Features</a>
+        <a href="#screenshots" class="text-white/70 hover:text-white transition-colors">Screenshots</a>
+        <a href="https://github.com/nichelicorn/horizon-new-tab" target="_blank" class="text-white/70 hover:text-white transition-colors">GitHub</a>
+      </div>
+    </nav>
+
     <!-- Hero Section -->
-    <div class="hero">
-      <div class="hero-logo">
-        <div class="hero-icon-wrapper">
-          <div class="hero-icon-glow"></div>
-          <div class="hero-icon-glass">
-            <img src="icon.png" alt="Horizon-Tab" class="hero-icon">
+    <div class="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-4 pt-20 pb-20">
+      <!-- Live Clock Demo -->
+      <div class="mb-16 transform hover:scale-105 transition-transform duration-700 cursor-default">
+        <h1 id="heroTime" class="text-[8rem] md:text-[11rem] leading-none font-normal tracking-tight bg-gradient-to-b from-white to-white/70 bg-clip-text text-transparent drop-shadow-2xl select-none" style="font-family: 'Montserrat', sans-serif; filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.3));">
+          12:00
+        </h1>
+        <p id="heroGreeting" class="text-2xl md:text-3xl font-light text-white/80 mt-6 italic font-serif">
+          Good Morning, Creator
+        </p>
+      </div>
+
+      <div class="max-w-2xl mx-auto space-y-6 z-10 animate-fade-in-up">
+        <p class="text-lg text-white/60 leading-relaxed max-w-lg mx-auto">
+          Transform your new tab into a beautiful, productive workspace.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+          <a href="#install" class="w-44 py-4 bg-amber-600 hover:bg-amber-500 text-white rounded-full font-semibold transition-all shadow-[0_0_20px_rgba(217,119,6,0.3)] hover:shadow-[0_0_30px_rgba(217,119,6,0.5)] flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Get Started</span>
+          </a>
+          <a href="https://github.com/nichelicorn/horizon-new-tab" target="_blank" class="w-44 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full font-semibold transition-all flex items-center justify-center gap-2 backdrop-blur-md">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+            <span>GitHub</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Bento Grid -->
+    <div id="features" class="max-w-7xl mx-auto px-4 py-24">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Everything you need</h2>
+        <p class="text-white/50">10 powerful features designed for focus, aesthetics, and performance.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[minmax(200px,auto)]">
+
+        <!-- 1. Stunning Wallpapers (Large: 2x2) -->
+        <div class="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-8 flex flex-col justify-between group">
+          <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1000&auto=format&fit=crop" alt="Wallpaper" class="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+          </div>
+          <div class="relative z-10 flex justify-between items-start">
+            <div class="p-3 bg-white/10 backdrop-blur-md rounded-xl text-white border border-white/10">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+            <span class="px-3 py-1 text-xs font-medium text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full">Unsplash 4K</span>
+          </div>
+          <div class="relative z-10">
+            <h3 class="text-3xl font-bold text-white mb-2">Stunning Wallpapers</h3>
+            <p class="text-white/70 max-w-md">Discover breathtaking landscapes and architecture every time you open a tab. Save your favorites to a personal collection.</p>
           </div>
         </div>
-        <h1>Horizon-Tab</h1>
-      </div>
-      <p class="tagline">Transform your new tab into a beautiful, productive workspace</p>
-      <div class="cta-buttons">
-        <a href="#install" class="btn btn-primary">Get Started</a>
-        <a href="https://github.com/ttian226/horizon-new-tab" target="_blank" class="btn btn-secondary">View on GitHub</a>
+
+        <!-- 2. Real-time Weather (1x1) -->
+        <div class="relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-6 flex flex-col items-center justify-center text-center group">
+          <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
+            <svg class="w-20 h-20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div class="w-20 h-20 mb-4 mt-4 relative">
+            <div class="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full animate-pulse"></div>
+            <svg class="relative z-10 w-16 h-16 text-white drop-shadow-lg mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+            </svg>
+            <div class="absolute top-0 right-0 animate-bounce">
+              <div class="w-6 h-6 bg-yellow-400 rounded-full blur-sm shadow-[0_0_15px_rgba(250,204,21,0.8)]"></div>
+            </div>
+          </div>
+          <h3 class="text-3xl font-light text-white mb-1" style="font-family: 'Montserrat', sans-serif;">23°</h3>
+          <p class="text-white/80 font-medium">New York</p>
+          <p class="text-white/40 text-xs mt-2">Auto-location & precise data</p>
+        </div>
+
+        <!-- 3. Beautiful Clock (1x1) -->
+        <div class="relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-6 flex flex-col justify-center">
+          <div class="flex items-center gap-3 mb-4 text-amber-400">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span class="font-semibold text-sm uppercase tracking-wider">Clock</span>
+          </div>
+          <div class="text-center bg-black/20 rounded-xl p-4 border border-white/5">
+            <span class="text-4xl text-white tracking-widest" style="font-family: 'Montserrat', sans-serif;">09:41</span>
+          </div>
+          <p class="text-white/50 text-xs text-center mt-4">Customizable 12h/24h formats with personalized greetings.</p>
+        </div>
+
+        <!-- 4. Focus Mode (Wide: 2x1) -->
+        <div class="md:col-span-2 relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-8 flex flex-col md:flex-row items-center gap-8 group">
+          <div class="flex-1 space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-white">Focus Mode</h3>
+            </div>
+            <p class="text-white/60 leading-relaxed">Enter a distraction-free workspace with a single click. Hide browser clutter and immerse yourself in your tasks.</p>
+          </div>
+          <div class="relative w-full md:w-1/3 aspect-[2/1] bg-black/40 rounded-lg border border-white/10 flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-0 bg-indigo-500/10 group-hover:bg-indigo-500/20 transition-colors"></div>
+            <div class="w-12 h-12 rounded-full border-2 border-indigo-400 flex items-center justify-center">
+              <div class="w-2 h-2 bg-indigo-400 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Todo List (Tall: 1x2) -->
+        <div class="md:row-span-2 relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-6 flex flex-col">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="p-2 bg-emerald-500/20 rounded-lg text-emerald-400">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-white">Todo List</h3>
+          </div>
+          <div class="flex-1 space-y-3">
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border-transparent opacity-50">
+              <div class="w-4 h-4 rounded border flex items-center justify-center bg-emerald-500 border-emerald-500">
+                <svg class="w-2.5 h-2.5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span class="text-sm line-through text-white/40">Review PR #42</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-black/20 border border-white/10">
+              <div class="w-4 h-4 rounded border border-white/30"></div>
+              <span class="text-sm text-white/80">Design system update</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-black/20 border border-white/10">
+              <div class="w-4 h-4 rounded border border-white/30"></div>
+              <span class="text-sm text-white/80">Team meeting at 2pm</span>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-black/20 border border-white/10">
+              <div class="w-4 h-4 rounded border border-white/30"></div>
+              <span class="text-sm text-white/80">Deploy to production</span>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/10">
+              <div class="h-8 bg-white/5 rounded text-xs flex items-center px-3 text-white/30">Add a task...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Markdown Notes (1x1) -->
+        <div class="relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-slate-500/20 rounded-lg text-slate-300">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">Markdown Notes</h3>
+          </div>
+          <div class="bg-[#1e1e1e] rounded-lg p-3 font-mono text-xs text-white/70 border border-white/5 shadow-inner">
+            <p class="text-blue-400"># Ideas</p>
+            <p class="mt-1">- [ ] Launch v1</p>
+            <p>- [ ] Write docs</p>
+            <p class="mt-2 text-purple-400">**bold** <span class="text-white/50">_italic_</span></p>
+          </div>
+          <p class="text-white/40 text-xs mt-3">Full GFM support with live preview.</p>
+        </div>
+
+        <!-- 7. Draggable Widgets (1x1) -->
+        <div class="relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-6 flex flex-col justify-between group">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-pink-500/20 rounded-lg text-pink-400">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">Draggable</h3>
+          </div>
+          <div class="relative h-24 my-2 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center overflow-hidden">
+            <div class="absolute p-2 bg-white/10 backdrop-blur rounded-lg border border-white/20 shadow-lg transform group-hover:translate-x-4 group-hover:-translate-y-2 transition-transform duration-500 flex items-center gap-2 cursor-grab">
+              <svg class="w-3.5 h-3.5 text-white/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/>
+              </svg>
+              <span class="text-xs text-white">Widget</span>
+            </div>
+          </div>
+          <p class="text-white/40 text-xs">Freely position widgets anywhere.</p>
+        </div>
+
+        <!-- 8. Glassmorphism Design (1x1) -->
+        <div class="relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-6 group">
+          <div class="relative z-10">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="p-2 bg-cyan-500/20 rounded-lg text-cyan-400">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.555C21.965 6.012 17.461 2 12 2z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-white">Glassmorphism</h3>
+            </div>
+            <p class="text-white/60 text-sm">Modern, clean aesthetics with frosted glass effects.</p>
+          </div>
+          <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-cyan-500/30 rounded-full blur-2xl group-hover:blur-3xl transition-all"></div>
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl transform scale-75 rotate-3 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+        </div>
+
+        <!-- 9. Cloud Sync (1x1) -->
+        <div class="relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-blue-500/20 rounded-lg text-blue-400">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">Cloud Sync</h3>
+          </div>
+          <div class="flex justify-between items-center px-4 py-3 bg-white/5 rounded-lg border border-white/5 mb-2">
+            <span class="text-xs text-white/60">Settings</span>
+            <div class="flex gap-1">
+              <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+              <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" style="animation-delay: 75ms"></div>
+              <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" style="animation-delay: 150ms"></div>
+            </div>
+          </div>
+          <p class="text-white/40 text-xs">Sync preferences & tasks across devices via Google.</p>
+        </div>
+
+        <!-- 10. Privacy First (1x1) -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-black/20 to-green-900/10 backdrop-blur-xl border border-green-500/20 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-green-500/30 p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-green-500/20 rounded-lg text-green-400">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-white">Privacy First</h3>
+          </div>
+          <div class="flex gap-2 mb-3">
+            <span class="px-3 py-1 text-xs font-medium text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full">No Ads</span>
+            <span class="px-3 py-1 text-xs font-medium text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full">No Tracking</span>
+          </div>
+          <p class="text-white/50 text-xs">Your data stays on your device. Sync is optional and secure.</p>
+        </div>
+
       </div>
     </div>
 
-    <!-- Features Section -->
-    <div class="features">
-      <h2>Everything you need for a perfect new tab</h2>
+    <!-- Carousel Section -->
+    <div id="screenshots" class="w-full max-w-[1400px] mx-auto px-4 py-20">
+      <h2 class="text-4xl md:text-5xl font-bold text-white text-center mb-16">See it in action</h2>
 
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="feature-icon">🖼️</div>
-          <h3>Stunning Wallpapers</h3>
-          <p>Beautiful, high-quality backgrounds from Unsplash. Switch wallpapers anytime and save your favorites for a personal collection.</p>
+      <div class="relative group mx-auto">
+        <!-- Browser Frame -->
+        <div class="bg-[#1e1e1e] rounded-xl shadow-2xl border border-white/10 overflow-hidden">
+          <!-- Browser Header -->
+          <div class="h-10 bg-white/5 border-b border-white/5 flex items-center px-4 gap-2">
+            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+            <div class="ml-4 flex-1 max-w-2xl h-6 bg-black/20 rounded-md flex items-center px-3 mx-auto">
+              <span class="text-xs text-white/20">chrome://newtab</span>
+            </div>
+          </div>
+
+          <!-- Carousel Content -->
+          <div class="relative w-full aspect-[16/10] bg-black overflow-hidden">
+            <!-- Slide 1: Minimalist New Tab -->
+            <div id="slide-0" class="carousel-slide absolute inset-0 transition-opacity duration-700 ease-in-out opacity-100 z-10">
+              <img src="images/horizon-minimalist-new-tab-hero.png" alt="Minimalist New Tab" class="w-full h-full object-cover">
+            </div>
+            <!-- Slide 2: Task List -->
+            <div id="slide-1" class="carousel-slide absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0 z-0">
+              <img src="images/horizon-productivity-task-list.png" alt="Productivity Task List" class="w-full h-full object-cover">
+            </div>
+            <!-- Slide 3: Focus Mode -->
+            <div id="slide-2" class="carousel-slide absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0 z-0">
+              <img src="images/horizon-spatial-focus-mode.png" alt="Spatial Focus Mode" class="w-full h-full object-cover">
+            </div>
+          </div>
         </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">🌤️</div>
-          <h3>Real-time Weather</h3>
-          <p>Stay informed with accurate weather data for your location. Automatic location detection or manual city selection.</p>
-        </div>
+      </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">⏰</div>
-          <h3>Beautiful Clock</h3>
-          <p>Elegant clock with personalized greetings. Choose 12 or 24-hour format. Set a custom nickname for a personal touch.</p>
+      <!-- Captions -->
+      <div class="mt-12 text-center h-24 relative max-w-3xl mx-auto">
+        <div id="caption-0" class="carousel-caption absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 transform opacity-100 translate-y-0">
+          <h3 class="text-3xl font-bold text-white mb-2">Minimalist New Tab</h3>
+          <p class="text-white/60 text-lg">Beautiful wallpapers, elegant clock, and real-time weather at a glance.</p>
         </div>
+        <div id="caption-1" class="carousel-caption absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 transform opacity-0 translate-y-4 pointer-events-none">
+          <h3 class="text-3xl font-bold text-white mb-2">Stay Productive</h3>
+          <p class="text-white/60 text-lg">Manage your tasks with a clean, intuitive todo list synced across devices.</p>
+        </div>
+        <div id="caption-2" class="carousel-caption absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 transform opacity-0 translate-y-4 pointer-events-none">
+          <h3 class="text-3xl font-bold text-white mb-2">Focus Mode</h3>
+          <p class="text-white/60 text-lg">Enter an immersive workspace with draggable widgets designed for deep work.</p>
+        </div>
+      </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">🔐</div>
-          <h3>Privacy First</h3>
-          <p>Your data stays on your device by default. Optional Google Sign-in for cloud sync across devices. No tracking, no ads.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🎨</div>
-          <h3>Glassmorphism Design</h3>
-          <p>Modern, clean interface with beautiful glass effects and smooth animations. Easy to use and pleasing to the eye.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">☁️</div>
-          <h3>Cloud Sync</h3>
-          <p>Sign in with Google to sync your preferences, favorite wallpapers, and settings across all your devices.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">✅</div>
-          <h3>Todo List</h3>
-          <p>Keep track of your tasks with a simple, elegant todo list. Syncs across devices when signed in.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🎯</div>
-          <h3>Focus Mode</h3>
-          <p>Enter a distraction-free workspace with customizable widgets. Perfect for deep work and concentration.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🖱️</div>
-          <h3>Draggable Widgets</h3>
-          <p>Freely position your clock, todo, and notes widgets anywhere on the screen. Your layout, your way.</p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">📝</div>
-          <h3>Quick Notes</h3>
-          <p>Capture thoughts instantly with the notes widget in focus mode. Simple, fast, and always accessible.</p>
-        </div>
+      <!-- Dots -->
+      <div class="flex justify-center gap-3 mt-4">
+        <button onclick="goToSlide(0)" id="dot-0" class="carousel-dot h-2 rounded-full transition-all duration-300 bg-amber-500 w-12" aria-label="Go to slide 1"></button>
+        <button onclick="goToSlide(1)" id="dot-1" class="carousel-dot h-2 rounded-full transition-all duration-300 bg-white/20 hover:bg-white/40 w-3" aria-label="Go to slide 2"></button>
+        <button onclick="goToSlide(2)" id="dot-2" class="carousel-dot h-2 rounded-full transition-all duration-300 bg-white/20 hover:bg-white/40 w-3" aria-label="Go to slide 3"></button>
       </div>
     </div>
 
-    <!-- Screenshot Section -->
-    <div class="screenshot">
-      <h2>See it in action</h2>
-      <div class="screenshot-placeholder">
-        Screenshots coming soon
+    <!-- Install Section -->
+    <div id="install" class="max-w-4xl mx-auto px-4 py-24">
+      <div class="relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] p-8 md:p-12">
+        <h2 class="text-3xl font-bold text-white text-center mb-8">Installation</h2>
+
+        <div class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-6 mb-10">
+          <div class="flex items-start gap-4">
+            <div class="p-2 bg-amber-500/20 rounded-full text-amber-500 shrink-0">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-amber-200 font-semibold mb-1">Chrome Web Store (Pending)</h4>
+              <p class="text-amber-100/60 text-sm">
+                The extension is currently under review by Google. In the meantime, you can install it manually in less than 2 minutes.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Step 1 -->
+          <div class="flex items-start gap-6 group">
+            <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 font-mono text-lg group-hover:bg-amber-600 group-hover:text-white transition-colors shrink-0">
+              1
+            </div>
+            <div class="flex-1 pb-6 border-b border-white/5">
+              <h4 class="text-lg font-medium text-white mb-1 leading-10">Download</h4>
+              <p class="text-white/50 text-sm">
+                Get the latest release from GitHub Releases.
+                <a href="https://github.com/nichelicorn/horizon-new-tab/releases" target="_blank" class="ml-2 text-amber-400 hover:underline inline-flex items-center gap-1">
+                  Download Zip
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </a>
+              </p>
+            </div>
+          </div>
+          <!-- Step 2 -->
+          <div class="flex items-start gap-6 group">
+            <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 font-mono text-lg group-hover:bg-amber-600 group-hover:text-white transition-colors shrink-0">
+              2
+            </div>
+            <div class="flex-1 pb-6 border-b border-white/5">
+              <h4 class="text-lg font-medium text-white mb-1 leading-10">Extract</h4>
+              <p class="text-white/50 text-sm">Unzip the downloaded file to a folder on your computer.</p>
+            </div>
+          </div>
+          <!-- Step 3 -->
+          <div class="flex items-start gap-6 group">
+            <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 font-mono text-lg group-hover:bg-amber-600 group-hover:text-white transition-colors shrink-0">
+              3
+            </div>
+            <div class="flex-1">
+              <h4 class="text-lg font-medium text-white mb-1 leading-10">Load Extension</h4>
+              <p class="text-white/50 text-sm">Go to chrome://extensions/, enable 'Developer Mode', and click 'Load Unpacked'. Select your folder.</p>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- Installation Section -->
-    <div class="info-section" id="install">
-      <h2>How to Install</h2>
-
-      <div class="highlight-box">
-        <strong>Chrome Web Store (Recommended - Coming Soon)</strong>
-        <p style="margin-top: 10px;">The extension is currently under review and will be available on the Chrome Web Store soon. This is the easiest and most secure way to install.</p>
-      </div>
-
-      <h3>Manual Installation (For Now)</h3>
-      <p>You can install the extension manually while we're waiting for Chrome Web Store approval:</p>
-      <ol style="margin-left: 30px; color: #666;">
-        <li style="margin: 15px 0;">Download the latest release from <a href="https://github.com/ttian226/horizon-new-tab/releases" target="_blank" style="color: #b45309;">GitHub Releases</a></li>
-        <li style="margin: 15px 0;">Extract the zip file to a folder on your computer</li>
-        <li style="margin: 15px 0;">Open Chrome and go to <code style="background: #fef3c7; padding: 2px 8px; border-radius: 4px;">chrome://extensions/</code></li>
-        <li style="margin: 15px 0;">Enable "Developer mode" using the toggle in the top right</li>
-        <li style="margin: 15px 0;">Click "Load unpacked" and select the extracted folder</li>
-        <li style="margin: 15px 0;">Open a new tab and enjoy Horizon!</li>
-      </ol>
-
-      <div class="highlight-box" style="margin-top: 30px;">
-        <strong>⚡ Note:</strong> Once installed, you can use Horizon completely offline. Sign-in is optional and only required for cloud sync across devices.
-      </div>
-    </div>
-
-    <!-- Features Detail Section -->
-    <div class="info-section">
-      <h2>Features in Detail</h2>
-
-      <h3>🖼️ Dynamic Wallpapers</h3>
-      <p>High-quality photos sourced from Unsplash, featuring stunning landscapes, cityscapes, and more:</p>
-      <ul>
-        <li>Click the refresh button to discover new wallpapers</li>
-        <li>Heart your favorites to build a personal collection (up to 9)</li>
-        <li>Your current wallpaper persists across all new tabs</li>
-        <li>Credits shown for each photographer</li>
-      </ul>
-
-      <h3>🌤️ Smart Weather</h3>
-      <p>Powered by Open-Meteo API for accurate weather data:</p>
-      <ul>
-        <li>Current temperature and weather conditions</li>
-        <li>Automatic location detection via browser geolocation</li>
-        <li>Manual city search with location name display</li>
-        <li>Privacy-friendly: no personal data stored on weather servers</li>
-      </ul>
-
-      <h3>⏰ Personalized Clock</h3>
-      <ul>
-        <li>Time-based greetings: Good morning, afternoon, evening, or night</li>
-        <li>12-hour or 24-hour format (toggle in Settings)</li>
-        <li>Customizable nickname (double-click to edit when signed in)</li>
-        <li>Elegant Montserrat font with smooth animations</li>
-      </ul>
-
-      <h3>✅ Todo List</h3>
-      <ul>
-        <li>Simple, distraction-free task management</li>
-        <li>Mark tasks complete with a single click</li>
-        <li>Cloud sync when signed in with Google</li>
-        <li>Quick access from the bottom toolbar</li>
-      </ul>
-
-      <h3>🎯 Focus Mode</h3>
-      <p>A dedicated workspace designed for deep concentration:</p>
-      <ul>
-        <li>Clean, minimal interface that removes distractions</li>
-        <li>Dock toolbar with quick access to clock, todo, and notes widgets</li>
-        <li>Draggable widgets you can position anywhere on screen</li>
-        <li>Remembers your widget positions between sessions</li>
-        <li>One-click toggle to enter and exit focus mode</li>
-      </ul>
-
-      <h3>📝 Quick Notes</h3>
-      <ul>
-        <li>Lightweight note-taking widget in focus mode</li>
-        <li>Perfect for jotting down ideas while working</li>
-        <li>Glassmorphism design that blends with your wallpaper</li>
-        <li>Drag to position anywhere on your screen</li>
-      </ul>
-
-      <h3>🔐 Privacy & Security</h3>
-      <ul>
-        <li><strong>Local-first:</strong> All data stored on your device by default</li>
-        <li><strong>Optional sign-in:</strong> Google OAuth for cloud sync</li>
-        <li><strong>No tracking:</strong> We don't track your browsing or sell data</li>
-        <li><strong>Open source:</strong> Code available on GitHub for transparency</li>
-      </ul>
-      <p>Read our full <a href="/privacy-policy.html" style="color: #b45309;">Privacy Policy</a></p>
-    </div>
-
-    <!-- Technical Details -->
-    <div class="info-section">
-      <h2>Built with Modern Technology</h2>
-      <p>Horizon is built with cutting-edge web technologies for the best performance and user experience:</p>
-
-      <div style="margin: 30px 0;">
-        <span class="badge">React 18</span>
-        <span class="badge">TypeScript</span>
-        <span class="badge">Vite</span>
-        <span class="badge">Tailwind CSS</span>
-        <span class="badge">Firebase</span>
-        <span class="badge">Chrome Manifest V3</span>
-      </div>
-
-      <h3>Why Chrome Manifest V3?</h3>
-      <p>We use the latest Chrome extension standards (Manifest V3) for:</p>
-      <ul>
-        <li>Better security and privacy protections</li>
-        <li>Improved performance and reliability</li>
-        <li>Future-proof compatibility with Chrome updates</li>
-      </ul>
-    </div>
-
-    <!-- Open Source -->
-    <div class="info-section">
-      <h2>Open Source & Contributing</h2>
-      <p>Horizon is open source and welcomes contributions from the community!</p>
-
-      <div class="highlight-box">
-        <strong>GitHub Repository:</strong> <a href="https://github.com/ttian226/horizon-new-tab" target="_blank" style="color: #b45309;">github.com/ttian226/horizon-new-tab</a>
-      </div>
-
-      <h3>Ways to Contribute</h3>
-      <ul>
-        <li><strong>Report bugs:</strong> Found an issue? Open a GitHub issue</li>
-        <li><strong>Suggest features:</strong> Have an idea? We'd love to hear it</li>
-        <li><strong>Submit code:</strong> Send us a pull request</li>
-        <li><strong>Spread the word:</strong> Share Horizon with friends and on social media</li>
-      </ul>
-    </div>
-
-    <!-- Contact -->
-    <div class="info-section">
-      <h2>Get in Touch</h2>
-      <p>Have questions, feedback, or need support?</p>
-      <ul>
-        <li><strong>Email:</strong> <a href="mailto:ttian226@gmail.com" style="color: #b45309;">ttian226@gmail.com</a></li>
-        <li><strong>GitHub Issues:</strong> <a href="https://github.com/ttian226/horizon-new-tab/issues" target="_blank" style="color: #b45309;">Report a bug or request a feature</a></li>
-        <li><strong>Privacy Policy:</strong> <a href="/privacy-policy.html" style="color: #b45309;">Read our privacy policy</a></li>
-      </ul>
     </div>
 
     <!-- Footer -->
-    <div class="footer">
-      <p><strong>Horizon-Tab</strong></p>
-      <p>Made with ❤️ for productivity and beauty</p>
-      <div class="footer-links">
-        <a href="/">Home</a> •
-        <a href="/privacy-policy.html">Privacy Policy</a> •
-        <a href="https://github.com/ttian226/horizon-new-tab" target="_blank">GitHub</a> •
-        <a href="mailto:ttian226@gmail.com">Contact</a>
+    <footer class="border-t border-white/10 bg-black/40 backdrop-blur-lg mt-auto">
+      <div class="max-w-7xl mx-auto px-4 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="flex items-center gap-3">
+          <img src="icons/icon-48.png" alt="Horizon Tab" class="w-8 h-8 rounded-lg">
+          <span class="text-white font-semibold tracking-wide">Horizon Tab</span>
+        </div>
+
+        <div class="flex gap-6 text-sm text-white/60">
+          <a href="privacy-policy.html" class="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="https://github.com/nichelicorn/horizon-new-tab" target="_blank" class="hover:text-white transition-colors">GitHub</a>
+          <a href="mailto:ttian226@gmail.com" class="hover:text-white transition-colors">Contact</a>
+        </div>
+
+        <p class="text-xs text-white/30">&copy; 2025 Horizon Tab</p>
       </div>
-      <p style="margin-top: 30px; font-size: 0.85em; color: #999;">
-        © 2025 Horizon. All rights reserved.
-      </p>
-    </div>
+    </footer>
   </div>
+
+  <script>
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('heroTime').textContent = `${hours}:${minutes}`;
+
+      const hour = now.getHours();
+      let greeting = 'Good Evening';
+      if (hour < 12) greeting = 'Good Morning';
+      else if (hour < 18) greeting = 'Good Afternoon';
+      document.getElementById('heroGreeting').textContent = `${greeting}, Creator`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Carousel
+    let currentSlide = 0;
+    const totalSlides = 3;
+    let autoPlayInterval;
+
+    function updateCarousel() {
+      for (let i = 0; i < totalSlides; i++) {
+        const slide = document.getElementById(`slide-${i}`);
+        const caption = document.getElementById(`caption-${i}`);
+        const dot = document.getElementById(`dot-${i}`);
+
+        if (i === currentSlide) {
+          slide.classList.remove('opacity-0', 'z-0');
+          slide.classList.add('opacity-100', 'z-10');
+          caption.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+          caption.classList.add('opacity-100', 'translate-y-0');
+          dot.classList.remove('bg-white/20', 'w-3');
+          dot.classList.add('bg-amber-500', 'w-12');
+        } else {
+          slide.classList.remove('opacity-100', 'z-10');
+          slide.classList.add('opacity-0', 'z-0');
+          caption.classList.remove('opacity-100', 'translate-y-0');
+          caption.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+          dot.classList.remove('bg-amber-500', 'w-12');
+          dot.classList.add('bg-white/20', 'w-3');
+        }
+      }
+    }
+
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % totalSlides;
+      updateCarousel();
+      resetAutoPlay();
+    }
+
+    function prevSlide() {
+      currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+      updateCarousel();
+      resetAutoPlay();
+    }
+
+    function goToSlide(index) {
+      currentSlide = index;
+      updateCarousel();
+      resetAutoPlay();
+    }
+
+    function resetAutoPlay() {
+      clearInterval(autoPlayInterval);
+      autoPlayInterval = setInterval(nextSlide, 5000);
+    }
+
+    // Start auto-play
+    autoPlayInterval = setInterval(nextSlide, 5000);
+  </script>
 </body>
 </html>

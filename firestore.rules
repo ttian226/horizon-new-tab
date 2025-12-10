@@ -39,19 +39,6 @@ service cloud.firestore {
                         && (!request.resource.data.settings.weather.keys().hasAny(['unit'])
                             || request.resource.data.settings.weather.unit in ['metric', 'imperial'])))));
 
-      // User membership
-      match /membership/info {
-        allow read: if isOwner(userId);
-        // Allow create only if doesn't exist (first time initialization)
-        allow create: if isOwner(userId)
-          && request.resource.data.isPro == false
-          && request.resource.data.plan == 'free'
-          && request.resource.data.maxFavorites == 9
-          && request.resource.data.maxTodoLists == 1;
-        // Only backend can update existing membership
-        allow update, delete: if false;
-      }
-
       // Todo Lists
       match /todolists/{listId} {
         allow read: if isOwner(userId);
@@ -86,12 +73,12 @@ service cloud.firestore {
           && request.resource.data.completed is bool;
       }
 
-      // User favorites (wallpapers) - with count limit based on membership
+      // User favorites (wallpapers) - limit enforced in client code
       match /favorites/{wallpaperId} {
         allow read: if isOwner(userId);
         allow delete: if isOwner(userId);
 
-        // Create: check membership limit (maxFavorites: 9 for free, -1 for unlimited)
+        // Create: validate required fields (limit of 9 enforced in client)
         allow create: if isOwner(userId)
           && request.resource.data.imageUrl is string
           && request.resource.data.photographer is string

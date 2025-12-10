@@ -1,18 +1,22 @@
-# Horizon New Tab
+# Horizon Tab
 
-A beautiful, productivity-focused new tab Chrome extension inspired by Momentum.
+A beautiful, productivity-focused new tab Chrome extension with stunning wallpapers, weather, and focus tools.
 
 ## Features
 
-- Clock with time-based greeting
-- Dynamic wallpapers (nature, architecture, minimalist, technology)
-- Weather display with geolocation support
-- Google Sign-in for cloud sync (upcoming)
-- Clean, minimal design
+- **Beautiful Clock** - Elegant time display with personalized greetings (12h/24h format)
+- **Stunning Wallpapers** - Curated 4K images from Unsplash across 4 categories
+- **Real-time Weather** - Auto-location or manual city search via Open-Meteo
+- **Todo List** - Cloud-synced task management with Google account
+- **Markdown Notes** - Quick notes with full GitHub Flavored Markdown support
+- **Focus Mode** - Distraction-free workspace with draggable widgets
+- **Favorites** - Save your favorite wallpapers (up to 9)
+- **Cloud Sync** - Sync settings, todos, and favorites across devices
+- **Glassmorphism Design** - Modern frosted glass aesthetics
 
 ## Tech Stack
 
-- **Frontend**: React 18 + TypeScript + Vite
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
 - **Backend**: Firebase
   - Authentication (Google Sign-in)
   - Cloud Firestore (Database)
@@ -30,22 +34,23 @@ horizon-new-tab/
 ├── src/
 │   ├── config/
 │   │   └── firebase.ts    # Firebase configuration
-│   ├── components/        # React components
+│   ├── components/
 │   │   ├── Clock.tsx      # Time and greeting display
-│   │   └── Weather.tsx    # Weather widget
+│   │   ├── Weather.tsx    # Weather widget
+│   │   ├── SettingsModal.tsx
+│   │   ├── Todo/          # Todo list components
+│   │   └── Widgets/       # Focus mode widgets (Notes, Todo, Dock)
 │   ├── services/
 │   │   ├── auth.ts        # Firebase Auth service
-│   │   └── wallpaper.ts   # Wallpaper service (via Firestore)
-│   ├── styles/
-│   │   └── index.css      # Global styles
+│   │   ├── firestore.ts   # Firestore service
+│   │   └── wallpaper.ts   # Wallpaper service
 │   ├── App.tsx            # Main component
 │   └── main.tsx           # Entry point
 ├── functions/             # Firebase Cloud Functions
 │   └── src/
 │       └── index.ts       # Scheduled wallpaper updates
-├── vite.config.ts
-├── tsconfig.json
-└── package.json
+├── docs/                  # GitHub Pages (Homepage)
+└── dist/                  # Build output
 ```
 
 ## Development
@@ -59,34 +64,27 @@ npm run dev
 
 # Build for production
 npm run build
+
+# Package extension (creates .zip)
+npm run package
 ```
 
-## Load Extension in Chrome
+## Installation
 
-1. Run `npm run build`
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" (top right)
-4. Click "Load unpacked"
-5. Select the `dist` folder
+### From Source
 
-## Roadmap
+1. Clone this repository
+2. Run `npm install && npm run build`
+3. Open Chrome and navigate to `chrome://extensions/`
+4. Enable "Developer mode" (top right)
+5. Click "Load unpacked"
+6. Select the `dist` folder
 
-### Free Version
-- [x] Clock display with greeting
-- [x] Dynamic wallpapers (4 categories)
-- [x] Weather widget
-- [x] Google Sign-in
-- [ ] Daily quotes
-- [ ] Todo list (local storage)
-- [ ] Quick links
-- [ ] Search box
+### From Release
 
-### Premium Version (Planned)
-- [ ] Custom background upload
-- [ ] Pomodoro timer / Focus mode
-- [ ] Task management integrations
-- [ ] Ambient sounds
-- [ ] Cloud sync for settings
+1. Download the latest release from [GitHub Releases](https://github.com/ttian226/horizon-new-tab/releases)
+2. Extract the zip file
+3. Follow steps 3-6 above
 
 ## API Resources
 
@@ -94,6 +92,13 @@ npm run build
 |---------|---------|-----------|
 | [Unsplash](https://unsplash.com/developers) | Wallpapers | 50 req/hour (demo) |
 | [Open-Meteo](https://open-meteo.com/) | Weather | Unlimited |
+
+## Privacy
+
+Horizon Tab respects your privacy:
+- No ads, no tracking
+- Data stored locally or in your Google account (optional)
+- See our [Privacy Policy](https://ttian226.github.io/horizon-new-tab/privacy-policy.html)
 
 ## License
 

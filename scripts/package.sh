@@ -21,7 +21,7 @@ mkdir -p store-assets
 # ============ Package 1: GitHub Release (with key) ============
 echo ""
 echo "📁 Creating GitHub release package (with key)..."
-GITHUB_ZIP="horizon-new-tab-v${VERSION}.zip"
+GITHUB_ZIP="horizon-tab-v${VERSION}.zip"
 cd dist
 zip -r "../release/${GITHUB_ZIP}" . -x "*.map" "*.DS_Store"
 cd ..
@@ -53,5 +53,5 @@ echo ""
 echo "✅ Packaging complete!"
 echo ""
 echo "📦 Packages created:"
-echo "   • release/${GITHUB_ZIP}        → GitHub Release (manual install)"
-echo "   • store-assets/${STORE_ZIP}    → Chrome Web Store"
+echo "   • release/${GITHUB_ZIP}       → GitHub Release (manual install)"
+echo "   • store-assets/${STORE_ZIP}   → Chrome Web Store"

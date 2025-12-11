@@ -1,4 +1,4 @@
-// Weather Service - Open-Meteo API (免费，无需 API Key)
+// Weather Service - Open-Meteo API (free, no API key required)
 // https://open-meteo.com/
 
 export interface WeatherData {

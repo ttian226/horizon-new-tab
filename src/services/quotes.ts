@@ -1,4 +1,4 @@
-// Quotes Service - Quotable API (免费，无需 API Key)
+// Quotes Service - Quotable API (free, no API key required)
 // https://github.com/lukePeavey/quotable
 
 export interface Quote {

@@ -43,7 +43,7 @@ export interface CloudTodoItem {
   id: string
   text: string
   completed: boolean
-  listId: string // 所属分类
+  listId: string // List ID this todo belongs to
   createdAt: Date
   updatedAt: Date
 }

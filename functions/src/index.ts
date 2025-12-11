@@ -26,8 +26,8 @@ setGlobalOptions({maxInstances: 10, region: "us-central1"});
 // Wallpaper categories - curated for high-quality landscape photos
 const CATEGORIES = ["nature", "travel", "architecture", "earth"];
 
-// Image optimization parameters for 2K WebP
-const IMAGE_PARAMS = "w=2560&h=1440&fit=crop&fm=webp&q=80";
+// Image optimization parameters for 4K WebP
+const IMAGE_PARAMS = "w=3840&h=2160&fit=crop&fm=webp&q=85";
 
 // Unsplash API response types
 interface UnsplashPhoto {

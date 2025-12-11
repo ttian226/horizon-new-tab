@@ -1,6 +1,34 @@
-# Horizon Tab
+<p align="center">
+  <img src="docs/icons/icon-128.png" alt="Horizon Tab" width="100">
+</p>
 
-A beautiful, productivity-focused new tab Chrome extension with stunning wallpapers, weather, and focus tools.
+<h1 align="center">Horizon Tab</h1>
+
+<p align="center">
+  A beautiful, productivity-focused new tab Chrome extension with stunning wallpapers, weather, and focus tools.
+</p>
+
+<p align="center">
+  <a href="https://github.com/ttian226/horizon-new-tab/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+  </a>
+  <a href="https://github.com/ttian226/horizon-new-tab/releases">
+    <img src="https://img.shields.io/github/v/release/ttian226/horizon-new-tab" alt="Release">
+  </a>
+  <img src="https://img.shields.io/badge/manifest-v3-green.svg" alt="Manifest V3">
+  <img src="https://img.shields.io/badge/react-18-61dafb.svg" alt="React 18">
+  <img src="https://img.shields.io/badge/typescript-5-3178c6.svg" alt="TypeScript">
+</p>
+
+<p align="center">
+  <a href="https://ttian226.github.io/horizon-new-tab/">Homepage</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#features">Features</a> •
+  <a href="#development">Development</a> •
+  <a href="https://ttian226.github.io/horizon-new-tab/privacy-policy.html">Privacy Policy</a>
+</p>
+
+---
 
 ## Features
 
@@ -14,44 +42,30 @@ A beautiful, productivity-focused new tab Chrome extension with stunning wallpap
 - **Cloud Sync** - Sync settings, todos, and favorites across devices
 - **Glassmorphism Design** - Modern frosted glass aesthetics
 
-## Tech Stack
+## Installation
 
-- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
-- **Backend**: Firebase
-  - Authentication (Google Sign-in)
-  - Cloud Firestore (Database)
-  - Cloud Functions (Scheduled wallpaper updates)
-- **APIs**:
-  - Unsplash (Wallpapers)
-  - Open-Meteo (Weather - free, no API key required)
+### Chrome Web Store
 
-## Project Structure
+Coming soon...
 
+### From GitHub Release
+
+1. Download the latest `.zip` from [Releases](https://github.com/ttian226/horizon-new-tab/releases)
+2. Extract the zip file
+3. Open Chrome → `chrome://extensions/`
+4. Enable **Developer mode** (top right)
+5. Click **Load unpacked** → Select the extracted folder
+
+### From Source
+
+```bash
+git clone https://github.com/ttian226/horizon-new-tab.git
+cd horizon-new-tab
+npm install
+npm run build
 ```
-horizon-new-tab/
-├── public/
-│   └── manifest.json      # Chrome Extension config (Manifest V3)
-├── src/
-│   ├── config/
-│   │   └── firebase.ts    # Firebase configuration
-│   ├── components/
-│   │   ├── Clock.tsx      # Time and greeting display
-│   │   ├── Weather.tsx    # Weather widget
-│   │   ├── SettingsModal.tsx
-│   │   ├── Todo/          # Todo list components
-│   │   └── Widgets/       # Focus mode widgets (Notes, Todo, Dock)
-│   ├── services/
-│   │   ├── auth.ts        # Firebase Auth service
-│   │   ├── firestore.ts   # Firestore service
-│   │   └── wallpaper.ts   # Wallpaper service
-│   ├── App.tsx            # Main component
-│   └── main.tsx           # Entry point
-├── functions/             # Firebase Cloud Functions
-│   └── src/
-│       └── index.ts       # Scheduled wallpaper updates
-├── docs/                  # GitHub Pages (Homepage)
-└── dist/                  # Build output
-```
+
+Then load the `dist` folder in Chrome as above.
 
 ## Development
 
@@ -59,39 +73,36 @@ horizon-new-tab/
 # Install dependencies
 npm install
 
-# Development mode
+# Start development server
 npm run dev
 
 # Build for production
 npm run build
 
-# Package extension (creates .zip)
+# Package extension (.zip)
 npm run package
 ```
 
-## Installation
+## Tech Stack
 
-### From Source
+| Category | Technologies |
+|----------|-------------|
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS |
+| Backend | Firebase (Auth, Firestore, Cloud Functions) |
+| APIs | Unsplash (Wallpapers), Open-Meteo (Weather) |
 
-1. Clone this repository
-2. Run `npm install && npm run build`
-3. Open Chrome and navigate to `chrome://extensions/`
-4. Enable "Developer mode" (top right)
-5. Click "Load unpacked"
-6. Select the `dist` folder
+## Project Structure
 
-### From Release
-
-1. Download the latest release from [GitHub Releases](https://github.com/ttian226/horizon-new-tab/releases)
-2. Extract the zip file
-3. Follow steps 3-6 above
-
-## API Resources
-
-| Service | Purpose | Free Tier |
-|---------|---------|-----------|
-| [Unsplash](https://unsplash.com/developers) | Wallpapers | 50 req/hour (demo) |
-| [Open-Meteo](https://open-meteo.com/) | Weather | Unlimited |
+```
+horizon-new-tab/
+├── src/
+│   ├── components/     # React components
+│   ├── services/       # API & Firebase services
+│   └── config/         # Firebase config
+├── functions/          # Cloud Functions
+├── docs/               # GitHub Pages (Homepage)
+└── public/             # Static assets & manifest.json
+```
 
 ## Privacy
 
@@ -100,6 +111,10 @@ Horizon Tab respects your privacy:
 - Data stored locally or in your Google account (optional)
 - See our [Privacy Policy](https://ttian226.github.io/horizon-new-tab/privacy-policy.html)
 
+## Acknowledgments
+
+This project was built with the assistance of [Claude AI](https://claude.ai), demonstrating the potential of AI-driven development. While AI assisted in generating code, all code has been manually reviewed, tested, and optimized.
+
 ## License
 
-MIT
+[MIT](LICENSE) © 2025

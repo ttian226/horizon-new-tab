@@ -21,11 +21,11 @@
 </p>
 
 <p align="center">
-  <a href="https://ttian226.github.io/horizon-new-tab/">Homepage</a> •
+  <a href="https://horizon-tab.app/">Homepage</a> •
   <a href="#installation">Installation</a> •
   <a href="#features">Features</a> •
   <a href="#development">Development</a> •
-  <a href="https://ttian226.github.io/horizon-new-tab/privacy-policy.html">Privacy Policy</a>
+  <a href="https://horizon-tab.app/privacy-policy.html">Privacy Policy</a>
 </p>
 
 ---
@@ -109,7 +109,7 @@ horizon-new-tab/
 Horizon Tab respects your privacy:
 - No ads, no tracking
 - Data stored locally or in your Google account (optional)
-- See our [Privacy Policy](https://ttian226.github.io/horizon-new-tab/privacy-policy.html)
+- See our [Privacy Policy](https://horizon-tab.app/privacy-policy.html)
 
 ## Acknowledgments
 

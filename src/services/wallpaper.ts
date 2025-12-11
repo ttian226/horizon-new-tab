@@ -166,3 +166,12 @@ export async function getOrSetCurrentWallpaper(): Promise<WallpaperData | null> 
   }
   return random
 }
+
+// Convert wallpaper URL to thumbnail (for settings panel, favorites grid, etc.)
+// Reduces 4K (3840x2160) to small thumbnail (400px width)
+export function getThumbnailUrl(imageUrl: string): string {
+  return imageUrl
+    .replace(/w=\d+/, 'w=400')
+    .replace(/h=\d+/, 'h=225')
+    .replace(/q=\d+/, 'q=70')
+}

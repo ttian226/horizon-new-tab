@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Settings, Heart, User, MapPin, Search, Trash2, Clock } from 'lucide-react'
 import { User as FirebaseUser } from 'firebase/auth'
 import { subscribeFavorites, removeFavorite, FavoriteWallpaper, updateWeatherSettings, updateClockFormat, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
-import { WallpaperData } from '../services/wallpaper'
+import { WallpaperData, getThumbnailUrl } from '../services/wallpaper'
 import { ClockFormat } from './Clock'
 
 type TabType = 'general' | 'favorites' | 'account'
@@ -351,7 +351,7 @@ export default function SettingsModal({
                         className="group relative aspect-[16/10] rounded-xl overflow-hidden hover:ring-2 hover:ring-white/30 transition-all"
                       >
                         <img
-                          src={fav.imageUrl}
+                          src={getThumbnailUrl(fav.imageUrl)}
                           alt={fav.photographer}
                           className="w-full h-full object-cover"
                         />

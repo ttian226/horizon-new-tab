@@ -221,6 +221,79 @@ export const triggerWallpaperUpdate = onRequest(
 );
 
 /**
+ * One-time migration: Upgrade all existing wallpapers from 2K to 4K
+ * Updates imageUrl parameters from w=2560&h=1440&q=80 to w=3840&h=2160&q=85
+ * Safe to run multiple times - idempotent operation
+ */
+export const migrateWallpapersTo4K = onRequest(
+  {
+    cors: true,
+    timeoutSeconds: 300, // 5 minutes for large migrations
+  },
+  async (request, response) => {
+    logger.info("Starting 2K to 4K migration for all wallpapers");
+
+    let totalUpdated = 0;
+    let totalSkipped = 0;
+    const results: {category: string; updated: number; skipped: number}[] = [];
+
+    for (const category of CATEGORIES) {
+      const photosRef = db
+        .collection("wallpapers")
+        .doc(category)
+        .collection("photos");
+
+      const snapshot = await photosRef.get();
+      let updated = 0;
+      let skipped = 0;
+
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        const oldUrl = data.imageUrl as string;
+
+        // Check if already 4K
+        if (oldUrl.includes("w=3840") && oldUrl.includes("h=2160")) {
+          skipped++;
+          continue;
+        }
+
+        // Replace 2K parameters with 4K parameters
+        let newUrl = oldUrl
+          .replace(/w=\d+/, "w=3840")
+          .replace(/h=\d+/, "h=2160")
+          .replace(/q=\d+/, "q=85");
+
+        // If no q parameter exists, add it
+        if (!newUrl.includes("q=")) {
+          newUrl += "&q=85";
+        }
+
+        await doc.ref.update({imageUrl: newUrl});
+        updated++;
+      }
+
+      results.push({category, updated, skipped});
+      totalUpdated += updated;
+      totalSkipped += skipped;
+
+      logger.info(`${category}: ${updated} updated, ${skipped} skipped`);
+    }
+
+    const message =
+      `Migration complete: ${totalUpdated} updated, ${totalSkipped} already 4K`;
+    logger.info(message);
+
+    response.json({
+      success: true,
+      message,
+      totalUpdated,
+      totalSkipped,
+      details: results,
+    });
+  }
+);
+
+/**
  * AI Weather Quote Generator using Vertex AI Gemini
  * Generates a short, healing quote based on weather description
  */

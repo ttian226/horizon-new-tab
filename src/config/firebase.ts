@@ -3,7 +3,7 @@
 // Plan: Blaze (Pay as you go with $300 free credits)
 
 import { initializeApp } from 'firebase/app'
-import { getAuth } from 'firebase/auth'
+import { getAuth } from 'firebase/auth/web-extension'
 import { getFirestore } from 'firebase/firestore'
 import { getAnalytics, isSupported } from 'firebase/analytics'
 

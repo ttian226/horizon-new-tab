@@ -8,7 +8,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User,
-} from 'firebase/auth'
+} from 'firebase/auth/web-extension'
 import { auth } from '../config/firebase'
 
 // Sign in with Google using chrome.identity

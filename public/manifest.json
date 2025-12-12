@@ -10,7 +10,6 @@
   },
   "permissions": [
     "storage",
-    "alarms",
     "identity"
   ],
   "host_permissions": [

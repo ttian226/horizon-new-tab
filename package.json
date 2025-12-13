@@ -1,6 +1,6 @@
 {
   "name": "horizon-new-tab",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "A beautiful, productivity-focused new tab Chrome extension",
   "type": "module",
   "scripts": {

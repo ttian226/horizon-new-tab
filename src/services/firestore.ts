@@ -228,15 +228,23 @@ export function subscribeTodos(
   const todosRef = collection(db, 'users', userId, 'todos')
   const q = query(todosRef, where('listId', '==', listId), orderBy('createdAt', 'desc'))
 
-  return onSnapshot(q, (snapshot) => {
-    const todos = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate() || new Date(),
-      updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-    })) as CloudTodoItem[]
-    callback(todos)
-  })
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const todos = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+      })) as CloudTodoItem[]
+      callback(todos)
+    },
+    (error) => {
+      console.error('subscribeTodos error:', error)
+      // Return empty array on error to stop loading state
+      callback([])
+    }
+  )
 }
 
 // Add a new todo

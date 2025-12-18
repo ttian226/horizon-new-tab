@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Horizon Tab",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Beautiful new tab page with focus tools, weather, and daily inspiration",
   "icons": {
     "16": "icons/icon-16.png",
@@ -20,7 +20,7 @@
     "https://*.cloudfunctions.net/*"
   ],
   "oauth2": {
-    "client_id": "1021420058440-v4bu4lri2j02gnbk92ci04f2j0hdh2fm.apps.googleusercontent.com",
+    "client_id": "1021420058440-rkut76at70achk9qbqvle2g2sdh5rsr7.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/userinfo.profile"

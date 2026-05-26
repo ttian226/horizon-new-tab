@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp public/manifest.json dist/ && cp -r public/icons dist/ 2>/dev/null || true",
+    "build": "VITE_FIREBASE_ENV=production vite build && cp public/manifest.json dist/ && cp -r public/icons dist/ 2>/dev/null || true",
+    "build:dev": "VITE_FIREBASE_ENV=development vite build && cp public/manifest.json dist/ && cp -r public/icons dist/ 2>/dev/null || true && sed -i '' 's/1021420058440-rkut76at70achk9qbqvle2g2sdh5rsr7/425487238446-irlqkrs5r7ktbil85ofrrgs7h6q6kv84/g' dist/manifest.json",
     "preview": "vite preview",
     "watch": "vite build --watch",
-    "package": "./scripts/package.sh"
+    "package": "./scripts/package.sh",
+    "deploy:dev": "firebase deploy --only firestore:rules --project development",
+    "deploy:prod": "firebase deploy --only firestore:rules --project production"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

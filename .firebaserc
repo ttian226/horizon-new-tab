@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "horizon-30aa6"
+    "default": "horizon-30aa6",
+    "production": "horizon-30aa6",
+    "development": "horizon-dev-734a4"
   }
 }

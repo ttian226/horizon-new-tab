@@ -16,9 +16,11 @@ import Clock, { ClockFormat } from './components/Clock'
 import Weather from './components/Weather'
 import WeatherQuote from './components/WeatherQuote'
 import SettingsModal from './components/SettingsModal'
+import WhatsNewModal from './components/WhatsNewModal'
 import TodoApp from './components/Todo/TodoApp'
 import Toast from './components/Toast'
 import { NotesWidget, TodoWidget, Dock, WidgetId } from './components/Widgets'
+import { CURRENT_VERSION, SEEN_VERSION_KEY, CURRENT_RELEASE } from './config/releaseNotes'
 
 // localStorage keys
 const CLOCK_FORMAT_KEY = 'horizon_clock_format'
@@ -114,6 +116,7 @@ function App() {
   const [isTodoPinned, setIsTodoPinned] = useState(loadTodoPinned)
   const [isWorkMode, setIsWorkMode] = useState(loadWorkMode)
   const [activeWidgets, setActiveWidgets] = useState<WidgetId[]>(loadActiveWidgets)
+  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false)
 
   const handleWeatherChange = useCallback((description: string) => {
     setWeatherDescription(description)
@@ -146,6 +149,31 @@ function App() {
       setUser(user)
     })
     return () => unsubscribe()
+  }, [])
+
+  // Show "What's New" once per version for returning users.
+  // First-time users (no SEEN_VERSION_KEY yet) get silently marked as
+  // already-seen so they don't see release notes they have no context for.
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem(SEEN_VERSION_KEY)
+      if (seen === null) {
+        localStorage.setItem(SEEN_VERSION_KEY, CURRENT_VERSION)
+      } else if (seen !== CURRENT_VERSION) {
+        setIsWhatsNewOpen(true)
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const handleWhatsNewClose = useCallback(() => {
+    setIsWhatsNewOpen(false)
+    try {
+      localStorage.setItem(SEEN_VERSION_KEY, CURRENT_VERSION)
+    } catch {
+      // ignore
+    }
   }, [])
 
   // Load nickname and clock format when user changes
@@ -568,6 +596,13 @@ function App() {
         onWeatherSettingsChange={handleWeatherSettingsChange}
         clockFormat={clockFormat}
         onClockFormatChange={handleClockFormatChange}
+      />
+
+      {/* What's New Modal */}
+      <WhatsNewModal
+        isOpen={isWhatsNewOpen}
+        onClose={handleWhatsNewClose}
+        release={CURRENT_RELEASE}
       />
 
       {/* Toast Notification */}

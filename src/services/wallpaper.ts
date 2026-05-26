@@ -21,6 +21,7 @@ export interface WallpaperData {
 
 const CACHE_KEY = 'horizon_all_wallpapers'
 const CURRENT_WALLPAPER_KEY = 'horizon_current_wallpaper'
+const CURRENT_WALLPAPER_MAX_AGE = 60 * 60 * 1000 // 1 hour — auto-rotate after this
 
 interface CachedWallpapers {
   wallpapers: WallpaperData[]
@@ -123,7 +124,7 @@ export async function getWallpaperCount(): Promise<number> {
 
 // ============ Current Wallpaper (Persistent across tabs) ============
 
-// Get current wallpaper from localStorage
+// Get current wallpaper from localStorage (ignores freshness — raw read)
 export function getCurrentWallpaper(): WallpaperData | null {
   try {
     const cached = localStorage.getItem(CURRENT_WALLPAPER_KEY)
@@ -131,6 +132,18 @@ export function getCurrentWallpaper(): WallpaperData | null {
 
     const data: CurrentWallpaper = JSON.parse(cached)
     return data.wallpaper
+  } catch {
+    return null
+  }
+}
+
+// Read the timestamp at which the current wallpaper was set
+function getCurrentWallpaperAge(): number | null {
+  try {
+    const cached = localStorage.getItem(CURRENT_WALLPAPER_KEY)
+    if (!cached) return null
+    const data: CurrentWallpaper = JSON.parse(cached)
+    return Date.now() - data.setAt
   } catch {
     return null
   }
@@ -149,17 +162,19 @@ export function setCurrentWallpaper(wallpaper: WallpaperData): void {
   }
 }
 
-// Get current wallpaper, or random if none exists
+// Get current wallpaper, or pick a new random one if missing/stale.
+// Stale = saved more than CURRENT_WALLPAPER_MAX_AGE ago. Within the freshness
+// window every new tab reuses the same wallpaper (multi-tab consistency).
 export async function getOrSetCurrentWallpaper(): Promise<WallpaperData | null> {
-  // Try to get existing current wallpaper
   const current = getCurrentWallpaper()
-  if (current) {
-    console.log('Using saved current wallpaper')
+  const age = getCurrentWallpaperAge()
+
+  if (current && age !== null && age < CURRENT_WALLPAPER_MAX_AGE) {
+    console.log(`Using saved current wallpaper (age ${Math.round(age / 60000)}m)`)
     return current
   }
 
-  // No current wallpaper, get a random one and save it
-  console.log('No current wallpaper, getting random')
+  console.log(current ? 'Current wallpaper expired, rotating' : 'No current wallpaper, getting random')
   const random = await getRandomWallpaper()
   if (random) {
     setCurrentWallpaper(random)

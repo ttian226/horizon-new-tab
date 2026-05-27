@@ -48,6 +48,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
       id: `temp-${Date.now()}`,
       text: text.slice(0, MAX_TODO_TEXT_LENGTH),
       completed: false,
+      status: 'todo',
       listId,
       createdAt: new Date(),
       updatedAt: new Date(),

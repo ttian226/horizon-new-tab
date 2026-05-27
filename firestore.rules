@@ -53,24 +53,60 @@ service cloud.firestore {
           && request.resource.data.name.size() <= 50;
       }
 
-      // User todos - with validation
+      // User todos - with validation (v0.1.4 schema)
       match /todos/{todoId} {
+        // Optional-field validators. Each returns true when the field is
+        // absent OR when present with the expected type/values.
+        function validTodoStatus() {
+          return !request.resource.data.keys().hasAny(['status'])
+            || (request.resource.data.status is string
+                && request.resource.data.status in ['todo', 'doing', 'done']);
+        }
+        function validDueDate() {
+          return !request.resource.data.keys().hasAny(['dueDate'])
+            || request.resource.data.dueDate is string;
+        }
+        function validIcon() {
+          return !request.resource.data.keys().hasAny(['icon'])
+            || request.resource.data.icon is string;
+        }
+        function validNotionPageId() {
+          return !request.resource.data.keys().hasAny(['notionPageId'])
+            || request.resource.data.notionPageId is string;
+        }
+        function validLastSyncedAt() {
+          return !request.resource.data.keys().hasAny(['lastSyncedAt'])
+            || request.resource.data.lastSyncedAt is number;
+        }
+
         allow read: if isOwner(userId);
         allow delete: if isOwner(userId);
 
-        // Create: validate text length and listId
+        // Create: text/listId/completed still required; new optional fields
+        // validated only if present.
         allow create: if isOwner(userId)
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 100
           && request.resource.data.listId is string
-          && request.resource.data.completed is bool;
+          && request.resource.data.completed is bool
+          && validTodoStatus()
+          && validDueDate()
+          && validIcon()
+          && validNotionPageId()
+          && validLastSyncedAt();
 
-        // Update: only allow toggling completed status
+        // Update: text and listId stay immutable; completed remains bool;
+        // status/dueDate/icon/notionPageId/lastSyncedAt may change.
         allow update: if isOwner(userId)
           && request.resource.data.text == resource.data.text
           && request.resource.data.listId == resource.data.listId
-          && request.resource.data.completed is bool;
+          && request.resource.data.completed is bool
+          && validTodoStatus()
+          && validDueDate()
+          && validIcon()
+          && validNotionPageId()
+          && validLastSyncedAt();
       }
 
       // User favorites (wallpapers) - limit enforced in client code

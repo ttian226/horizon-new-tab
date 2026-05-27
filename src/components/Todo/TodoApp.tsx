@@ -91,6 +91,7 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
       id: `temp-${Date.now()}`, // Temporary ID
       text: text.slice(0, MAX_TODO_TEXT_LENGTH),
       completed: false,
+      status: 'todo',
       listId,
       createdAt: new Date(),
       updatedAt: new Date(),

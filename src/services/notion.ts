@@ -10,6 +10,7 @@
 // + page-level icon emoji.
 
 import { getLocal, setLocal, removeLocal } from './extensionStorage'
+import type { CloudTodoItem } from './firestore'
 
 const CONFIG_KEY = 'horizon_notion_config'
 const API_BASE = 'https://api.notion.com/v1'
@@ -196,4 +197,24 @@ export async function fetchTasks(
 
   const data = (await response.json()) as NotionQueryResponse
   return data.results.map(pageToTask)
+}
+
+// Adapter: shape a NotionTask into CloudTodoItem so the UI renders both
+// sources through a single component path. The Notion page URL is kept on
+// the item so the click handler can jump to Notion (read-only in M1).
+export function notionTaskToTodoItem(task: NotionTask): CloudTodoItem & { notionUrl: string } {
+  const editedAt = new Date(task.lastEditedTime)
+  return {
+    id: task.pageId,
+    text: task.title,
+    completed: task.status === 'Done',
+    listId: 'notion', // synthetic, never persisted
+    notionPageId: task.pageId,
+    notionUrl: task.url,
+    icon: task.icon,
+    dueDate: task.dueDate,
+    lastSyncedAt: Date.now(),
+    createdAt: editedAt,
+    updatedAt: editedAt,
+  }
 }

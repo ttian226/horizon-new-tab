@@ -1,3 +1,18 @@
+// Coarse "synced N ago" label for a syncSource timestamp (Notion fetch etc).
+// Updates roughly every minute via React state when caller re-renders.
+export function formatSyncedAgo(ms: number | null): string {
+  if (ms === null) return ''
+  const diffMs = Date.now() - ms
+  if (diffMs < 30 * 1000) return 'just now'
+  const minutes = Math.floor(diffMs / 60000)
+  if (minutes < 1) return 'just now'
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
+
 // Human-friendly due-date label for todo rows. Returns "Today" / "Tomorrow"
 // / "Yesterday" for adjacent days, otherwise a short month+day (and year if
 // not current year). isPast lets the caller paint overdue dates in red.

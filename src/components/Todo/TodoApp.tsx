@@ -2,19 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Plus, Trash2, Pin } from 'lucide-react'
 import {
   CloudTodoItem,
-  subscribeTodos,
   addTodo,
   toggleTodo,
   deleteTodo,
   clearCompletedTodos,
-  ensureDefaultTodoList,
 } from '../../services/firestore'
-import { formatDueDate } from '../../utils/formatDate'
+import { formatDueDate, formatSyncedAgo } from '../../utils/formatDate'
+import { useTodosWithNotion } from '../../hooks/useTodosWithNotion'
 
-// Constants for limits
 const MAX_TODO_TEXT_LENGTH = 100
 const MAX_TODO_COUNT = 20
-const DEFAULT_TODO_LIST_ID = 'today'
 
 interface TodoAppProps {
   userId: string
@@ -25,101 +22,83 @@ interface TodoAppProps {
 }
 
 export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggle }: TodoAppProps) {
-  const [todos, setTodos] = useState<CloudTodoItem[]>([])
+  if (!isOpen) return null
+  // Body lives in a child so the hook only runs while the panel is mounted.
+  return (
+    <TodoAppBody
+      userId={userId}
+      isPinned={isPinned}
+      onToggle={onToggle}
+      onPinToggle={onPinToggle}
+    />
+  )
+}
+
+function TodoAppBody({
+  userId,
+  isPinned,
+  onToggle,
+  onPinToggle,
+}: Omit<TodoAppProps, 'isOpen'>) {
+  const {
+    todos,
+    isLoading,
+    isNotionMode,
+    lastSyncedAt,
+    notionError,
+    notionUrlFor,
+    localListId,
+  } = useTodosWithNotion(userId)
+
   const [newTodoText, setNewTodoText] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [listId, setListId] = useState<string>(DEFAULT_TODO_LIST_ID)
+  const [optimistic, setOptimistic] = useState<CloudTodoItem[]>([])
   const [isHovered, setIsHovered] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  // Ensure default list exists and subscribe to todos - LAZY LOADING: only when panel is open
   useEffect(() => {
-    if (!userId || !isOpen) return
-
-    setLoading(true)
-
-    // Ensure default "Today" list exists
-    ensureDefaultTodoList(userId).then((defaultListId) => {
-      setListId(defaultListId)
-
-      // Subscribe to todos for this list
-      const unsubscribe = subscribeTodos(userId, defaultListId, (updatedTodos) => {
-        setTodos(updatedTodos)
-        setLoading(false)
-      })
-
-      return () => unsubscribe()
-    })
-  }, [userId, isOpen])
-
-  // Focus input when panel opens
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus()
-    }
-  }, [isOpen])
+    inputRef.current?.focus()
+  }, [])
 
   // Close panel when clicking outside (only if not pinned)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        // Don't close if pinned
         if (!isPinned) {
           onToggle()
         }
       }
     }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
+    document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen, isPinned, onToggle])
+  }, [isPinned, onToggle])
+
+  const mergedTodos = isNotionMode ? todos : [...optimistic, ...todos]
+  const incompleteTodos = mergedTodos.filter((t) => !t.completed)
+  const completedTodos = mergedTodos.filter((t) => t.completed)
 
   const handleAddTodo = async () => {
     const text = newTodoText.trim()
-    if (!text) return
+    if (!text || mergedTodos.length >= MAX_TODO_COUNT || !localListId) return
 
-    // Check todo count limit
-    if (todos.length >= MAX_TODO_COUNT) {
-      console.warn('Todo limit reached')
-      return
-    }
-
-    // Optimistic update: Add todo locally first for instant feedback
-    const optimisticTodo: CloudTodoItem = {
-      id: `temp-${Date.now()}`, // Temporary ID
+    const placeholder: CloudTodoItem = {
+      id: `temp-${Date.now()}`,
       text: text.slice(0, MAX_TODO_TEXT_LENGTH),
       completed: false,
-      listId,
+      listId: localListId,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
 
-    // Update UI immediately
-    setTodos((prev) => [optimisticTodo, ...prev])
+    setOptimistic((prev) => [placeholder, ...prev])
     setNewTodoText('')
 
-    // Then sync to Firestore in background
     try {
-      const realId = await addTodo(userId, text.slice(0, MAX_TODO_TEXT_LENGTH), listId)
-      // Update the optimistic todo with real ID
-      setTodos((prev) =>
-        prev.map((todo) => (todo.id === optimisticTodo.id ? { ...todo, id: realId } : todo))
-      )
+      await addTodo(userId, placeholder.text, localListId)
     } catch (error) {
       console.error('Failed to add todo:', error)
-      // Rollback on error: remove the optimistic todo
-      setTodos((prev) => prev.filter((todo) => todo.id !== optimisticTodo.id))
-    }
-  }
-
-  const handleClearCompleted = async () => {
-    try {
-      await clearCompletedTodos(userId, listId)
-    } catch (error) {
-      console.error('Failed to clear completed todos:', error)
+    } finally {
+      setOptimistic((prev) => prev.filter((t) => t.id !== placeholder.id))
     }
   }
 
@@ -139,24 +118,31 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleAddTodo()
+  const handleClearCompleted = async () => {
+    if (!localListId) return
+    try {
+      await clearCompletedTodos(userId, localListId)
+    } catch (error) {
+      console.error('Failed to clear completed todos:', error)
     }
   }
 
-  const incompleteTodos = todos.filter((t) => !t.completed)
-  const completedTodos = todos.filter((t) => t.completed)
-
-  if (!isOpen) return null
-
-  // Handle close button click
-  const handleClose = () => {
-    if (isPinned) {
-      // If pinned, unpin first then close
-      onPinToggle(false)
+  const handleRowClick = (todo: CloudTodoItem) => {
+    if (isNotionMode) {
+      const url = notionUrlFor(todo.id)
+      if (url) window.open(url, '_blank', 'noopener,noreferrer')
+      return
     }
+    handleToggleTodo(todo.id, todo.completed)
+  }
+
+  const handleClose = () => {
+    if (isPinned) onPinToggle(false)
     onToggle()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleAddTodo()
   }
 
   return (
@@ -170,11 +156,9 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/5">
-        <h3 className="text-sm font-medium text-white/90 tracking-wide">
-          Today's Tasks
-        </h3>
+        <h3 className="text-sm font-medium text-white/90 tracking-wide">Today's Tasks</h3>
         <div className="flex items-center gap-2">
-          {completedTodos.length > 0 && (
+          {!isNotionMode && completedTodos.length > 0 && (
             <button
               onClick={handleClearCompleted}
               className="text-xs text-white/30 hover:text-white/60 transition-colors"
@@ -182,7 +166,6 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
               Clear done
             </button>
           )}
-          {/* Pin Button */}
           <button
             onClick={() => onPinToggle(!isPinned)}
             className={`transition-colors ${
@@ -192,7 +175,6 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
           >
             <Pin size={16} className={isPinned ? 'fill-current' : ''} />
           </button>
-          {/* Close Button */}
           <button
             onClick={handleClose}
             className="text-white/40 hover:text-white transition-colors"
@@ -202,9 +184,20 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
         </div>
       </div>
 
-      {/* Todo List */}
+      {/* Notion sync status — shown only when Notion is the data source */}
+      {isNotionMode && (
+        <div className="px-4 py-1.5 border-b border-white/5 text-[10px] text-white/40">
+          {notionError ? (
+            <span className="text-red-400">Notion: {notionError}</span>
+          ) : (
+            <>Synced from Notion · {formatSyncedAgo(lastSyncedAt) || '…'}</>
+          )}
+        </div>
+      )}
+
+      {/* Todo list */}
       <div className="overflow-y-auto max-h-60 p-2">
-        {loading ? (
+        {isLoading ? (
           <div className="space-y-1 p-1">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-2.5 pl-3 pr-8 py-2 animate-pulse">
@@ -213,23 +206,21 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
               </div>
             ))}
           </div>
-        ) : todos.length === 0 ? (
+        ) : mergedTodos.length === 0 ? (
           <div className="text-center py-8 text-white/40 text-sm">
-            No tasks for today, enjoy!
+            {isNotionMode ? 'No tasks in Notion' : 'No tasks for today, enjoy!'}
           </div>
         ) : (
           <div className="space-y-1">
-            {/* Incomplete todos */}
             {incompleteTodos.map((todo) => (
               <TodoItem
                 key={todo.id}
                 todo={todo}
-                onToggle={() => handleToggleTodo(todo.id, todo.completed)}
-                onDelete={() => handleDeleteTodo(todo.id)}
+                isNotionMode={isNotionMode}
+                onClick={() => handleRowClick(todo)}
+                onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
               />
             ))}
-
-            {/* Completed todos */}
             {completedTodos.length > 0 && incompleteTodos.length > 0 && (
               <div className="h-px w-full bg-white/5 my-2" />
             )}
@@ -237,48 +228,55 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
               <TodoItem
                 key={todo.id}
                 todo={todo}
-                onToggle={() => handleToggleTodo(todo.id, todo.completed)}
-                onDelete={() => handleDeleteTodo(todo.id)}
+                isNotionMode={isNotionMode}
+                onClick={() => handleRowClick(todo)}
+                onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Input */}
-      <div className="p-3 border-t border-white/5">
-        {todos.length >= MAX_TODO_COUNT ? (
-          <div className="text-center text-xs text-white/30 py-1">
-            Limit reached ({MAX_TODO_COUNT} tasks). Complete or delete some tasks.
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-            <Plus size={16} className="text-white/40" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={newTodoText}
-              onChange={(e) => setNewTodoText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Add a task..."
-              maxLength={MAX_TODO_TEXT_LENGTH}
-              className="flex-1 bg-transparent text-sm text-white placeholder-white/30 outline-none"
-            />
-          </div>
-        )}
-      </div>
+      {/* Input — local mode only. Notion mode shows a hint. */}
+      {!isNotionMode ? (
+        <div className="p-3 border-t border-white/5">
+          {mergedTodos.length >= MAX_TODO_COUNT ? (
+            <div className="text-center text-xs text-white/30 py-1">
+              Limit reached ({MAX_TODO_COUNT} tasks). Complete or delete some tasks.
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
+              <Plus size={16} className="text-white/40" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={newTodoText}
+                onChange={(e) => setNewTodoText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Add a task..."
+                maxLength={MAX_TODO_TEXT_LENGTH}
+                className="flex-1 bg-transparent text-sm text-white placeholder-white/30 outline-none"
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="p-3 border-t border-white/5 text-center text-[11px] text-white/30">
+          Add and edit tasks in Notion
+        </div>
+      )}
     </div>
   )
 }
 
-// Todo Item Component
 interface TodoItemProps {
   todo: CloudTodoItem
-  onToggle: () => void
-  onDelete: () => void
+  isNotionMode: boolean
+  onClick: () => void
+  onDelete?: () => void
 }
 
-function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
+function TodoItem({ todo, isNotionMode, onClick, onDelete }: TodoItemProps) {
   const [showDelete, setShowDelete] = useState(false)
   const due = todo.dueDate ? formatDueDate(todo.dueDate) : null
 
@@ -287,16 +285,15 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
       className="group relative flex items-start gap-2.5 pl-3 pr-8 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
       onMouseEnter={() => setShowDelete(true)}
       onMouseLeave={() => setShowDelete(false)}
-      onClick={onToggle}
+      onClick={onClick}
+      title={isNotionMode ? 'Open in Notion' : undefined}
     >
-      {/* Icon emoji */}
       {todo.icon && (
         <span className="shrink-0 text-base leading-snug" aria-hidden>
           {todo.icon}
         </span>
       )}
 
-      {/* Text */}
       <span
         className={`flex-1 text-sm leading-snug break-words line-clamp-2 transition-all ${
           todo.completed ? 'text-white/30 line-through' : 'text-white/80'
@@ -306,7 +303,6 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
         {todo.text}
       </span>
 
-      {/* Due date */}
       {due && (
         <span
           className={`shrink-0 mt-0.5 text-[10px] font-mono tabular-nums ${
@@ -317,18 +313,19 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
         </span>
       )}
 
-      {/* Delete button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          onDelete()
-        }}
-        className={`absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-red-400 transition-all ${
-          showDelete ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        <Trash2 size={14} />
-      </button>
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
+          className={`absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-red-400 transition-all ${
+            showDelete ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
     </div>
   )
 }

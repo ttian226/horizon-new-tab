@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Plus, Check, Trash2, Pin } from 'lucide-react'
+import { X, Plus, Trash2, Pin } from 'lucide-react'
 import {
   CloudTodoItem,
   subscribeTodos,
@@ -9,6 +9,7 @@ import {
   clearCompletedTodos,
   ensureDefaultTodoList,
 } from '../../services/firestore'
+import { formatDueDate } from '../../utils/formatDate'
 
 // Constants for limits
 const MAX_TODO_TEXT_LENGTH = 100
@@ -91,7 +92,6 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
       id: `temp-${Date.now()}`, // Temporary ID
       text: text.slice(0, MAX_TODO_TEXT_LENGTH),
       completed: false,
-      status: 'todo',
       listId,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -164,7 +164,7 @@ export default function TodoApp({ userId, isOpen, isPinned, onToggle, onPinToggl
       ref={panelRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`absolute bottom-14 left-0 w-80 max-h-96 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content transition-opacity duration-300 ${
+      className={`absolute bottom-14 left-0 w-[400px] max-h-[500px] bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content transition-opacity duration-300 ${
         isPinned && !isHovered ? 'opacity-60' : 'opacity-100'
       }`}
     >
@@ -280,26 +280,23 @@ interface TodoItemProps {
 
 function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
   const [showDelete, setShowDelete] = useState(false)
+  const due = todo.dueDate ? formatDueDate(todo.dueDate) : null
 
   return (
     <div
-      className="group relative flex items-start gap-2.5 pl-3 pr-8 py-2 rounded-lg hover:bg-white/5 transition-colors"
+      className="group relative flex items-start gap-2.5 pl-3 pr-8 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
       onMouseEnter={() => setShowDelete(true)}
       onMouseLeave={() => setShowDelete(false)}
+      onClick={onToggle}
     >
-      {/* Checkbox - small rounded square for modern look */}
-      <button
-        onClick={onToggle}
-        className={`mt-px shrink-0 w-4 h-4 rounded-[3px] border flex items-center justify-center transition-all ${
-          todo.completed
-            ? 'bg-white/20 border-white/30'
-            : 'border-white/20 hover:border-white/40'
-        }`}
-      >
-        {todo.completed && <Check size={10} className="text-white/70" />}
-      </button>
+      {/* Icon emoji */}
+      {todo.icon && (
+        <span className="shrink-0 text-base leading-snug" aria-hidden>
+          {todo.icon}
+        </span>
+      )}
 
-      {/* Text - max 2 lines with ellipsis */}
+      {/* Text */}
       <span
         className={`flex-1 text-sm leading-snug break-words line-clamp-2 transition-all ${
           todo.completed ? 'text-white/30 line-through' : 'text-white/80'
@@ -309,9 +306,23 @@ function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
         {todo.text}
       </span>
 
-      {/* Delete Button - absolute positioned to not squeeze text */}
+      {/* Due date */}
+      {due && (
+        <span
+          className={`shrink-0 mt-0.5 text-[10px] font-mono tabular-nums ${
+            due.isPast && !todo.completed ? 'text-red-400' : 'text-white/40'
+          }`}
+        >
+          {due.label}
+        </span>
+      )}
+
+      {/* Delete button */}
       <button
-        onClick={onDelete}
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete()
+        }}
         className={`absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-red-400 transition-all ${
           showDelete ? 'opacity-100' : 'opacity-0'
         }`}

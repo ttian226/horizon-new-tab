@@ -38,21 +38,14 @@ export interface UserSettings {
   updatedAt?: Date
 }
 
-// 3-state status, aligned with Notion Tasks DB schema (Not done / Doing / Done).
-export type TodoStatus = 'todo' | 'doing' | 'done'
-
-// Todo item interface. v0.1.4 expanded the schema to support Notion sync.
-// - `status` is the primary state; `completed` is kept in lockstep for
-//   backward compatibility with pre-v0.1.4 clients (and is derived from
-//   `status` on write, read mapping fills `status` from `completed` for
-//   legacy docs that only have the bool).
-// - `dueDate`, `icon`, `notionPageId`, `lastSyncedAt` are new optional
-//   fields. UI may render them but doesn't require them.
+// Todo item interface. v0.1.4 added optional fields to support Notion sync:
+// dueDate / icon / notionPageId / lastSyncedAt. The completed bool stays the
+// single source of truth for "done vs not done" — matches SyncTask philosophy
+// and the actual Notion Tasks DB which only has Not done / Done.
 export interface CloudTodoItem {
   id: string
   text: string
   completed: boolean
-  status: TodoStatus
   dueDate?: string // ISO 'YYYY-MM-DD'
   icon?: string // emoji
   notionPageId?: string // present when this todo is bound to a Notion page
@@ -60,14 +53,6 @@ export interface CloudTodoItem {
   listId: string // List ID this todo belongs to
   createdAt: Date
   updatedAt: Date
-}
-
-// Derive status from a possibly-legacy doc that only has `completed`.
-function inferStatus(raw: { status?: string; completed?: boolean }): TodoStatus {
-  if (raw.status === 'todo' || raw.status === 'doing' || raw.status === 'done') {
-    return raw.status
-  }
-  return raw.completed ? 'done' : 'todo'
 }
 
 // Todo List interface
@@ -255,12 +240,9 @@ export function subscribeTodos(
     (snapshot) => {
       const todos = snapshot.docs.map((doc) => {
         const data = doc.data()
-        const status = inferStatus(data)
         return {
           id: doc.id,
           ...data,
-          status,
-          completed: data.completed ?? status === 'done',
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         } as CloudTodoItem
@@ -275,11 +257,9 @@ export function subscribeTodos(
   )
 }
 
-// Add a new todo. Optional fields (status / dueDate / icon / notionPageId /
-// lastSyncedAt) let the caller pre-populate Notion-synced data. completed
-// always tracks status to keep pre-v0.1.4 readers happy.
+// Add a new todo. Optional fields (dueDate / icon / notionPageId /
+// lastSyncedAt) let the caller pre-populate Notion-synced data.
 export interface AddTodoOptions {
-  status?: TodoStatus
   dueDate?: string
   icon?: string
   notionPageId?: string
@@ -294,11 +274,9 @@ export async function addTodo(
 ): Promise<string> {
   const todosRef = collection(db, 'users', userId, 'todos')
   const docRef = doc(todosRef)
-  const status: TodoStatus = options.status ?? 'todo'
   const payload: Record<string, unknown> = {
     text,
-    completed: status === 'done',
-    status,
+    completed: false,
     listId,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -311,15 +289,10 @@ export async function addTodo(
   return docRef.id
 }
 
-// Toggle todo completed status. Writes both `completed` and `status` so
-// pre-v0.1.4 readers and v0.1.4+ readers stay consistent. Toggling off
-// always resets to 'todo' (the 'doing' state is set via a dedicated
-// updateTodo call when UI supports it).
 export async function toggleTodo(userId: string, todoId: string, completed: boolean): Promise<void> {
   const docRef = doc(db, 'users', userId, 'todos', todoId)
   await updateDoc(docRef, {
     completed,
-    status: completed ? 'done' : 'todo',
     updatedAt: serverTimestamp(),
   })
 }

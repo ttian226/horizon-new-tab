@@ -20,7 +20,9 @@ export interface NotionConfig {
   databaseId: string
 }
 
-export type NotionStatus = 'Not done' | 'Doing' | 'Done'
+// 2-state model aligned with SyncTask and the actual Notion Tasks DB:
+// anything that's not literally "Done" is treated as "Not done".
+export type NotionStatus = 'Not done' | 'Done'
 
 export interface NotionTask {
   pageId: string
@@ -101,10 +103,8 @@ function extractTitle(prop: NotionPropertyValue | undefined): string {
 
 function extractStatus(prop: NotionPropertyValue | undefined): NotionStatus {
   if (!prop || prop.type !== 'status') return 'Not done'
-  const status = (prop as Extract<NotionPropertyValue, { type: 'status' }>).status
-  const name = status?.name
-  if (name === 'Doing' || name === 'Done') return name
-  return 'Not done'
+  const name = (prop as Extract<NotionPropertyValue, { type: 'status' }>).status?.name
+  return name === 'Done' ? 'Done' : 'Not done'
 }
 
 function extractDate(prop: NotionPropertyValue | undefined): string | undefined {

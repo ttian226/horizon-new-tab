@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ListTodo, Plus, Check, Trash2 } from 'lucide-react'
+import { ListTodo, Plus, Trash2 } from 'lucide-react'
 import GlassCard from './GlassCard'
 import {
   CloudTodoItem,
@@ -10,6 +10,7 @@ import {
   clearCompletedTodos,
   ensureDefaultTodoList,
 } from '../../services/firestore'
+import { formatDueDate } from '../../utils/formatDate'
 
 const MAX_TODO_TEXT_LENGTH = 100
 const MAX_TODO_COUNT = 20
@@ -48,7 +49,6 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
       id: `temp-${Date.now()}`,
       text: text.slice(0, MAX_TODO_TEXT_LENGTH),
       completed: false,
-      status: 'todo',
       listId,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -194,35 +194,45 @@ interface TodoItemProps {
 
 function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
   const [showDelete, setShowDelete] = useState(false)
+  const due = todo.dueDate ? formatDueDate(todo.dueDate) : null
 
   return (
     <div
-      className="group flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+      className="group relative flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
       onMouseEnter={() => setShowDelete(true)}
       onMouseLeave={() => setShowDelete(false)}
+      onClick={onToggle}
     >
-      <button
-        onClick={onToggle}
-        className={`shrink-0 w-4 h-4 rounded-[3px] border flex items-center justify-center transition-all ${
-          todo.completed
-            ? 'bg-white/20 border-white/30'
-            : 'border-white/20 hover:border-white/40'
-        }`}
-      >
-        {todo.completed && <Check size={10} className="text-white/70" />}
-      </button>
+      {todo.icon && (
+        <span className="shrink-0 text-base leading-none" aria-hidden>
+          {todo.icon}
+        </span>
+      )}
 
       <span
-        className={`flex-1 text-sm transition-all ${
+        className={`flex-1 text-sm truncate transition-all ${
           todo.completed ? 'text-white/30 line-through' : 'text-white/80'
         }`}
       >
         {todo.text}
       </span>
 
+      {due && (
+        <span
+          className={`shrink-0 text-[10px] font-mono tabular-nums ${
+            due.isPast && !todo.completed ? 'text-red-400' : 'text-white/40'
+          }`}
+        >
+          {due.label}
+        </span>
+      )}
+
       <button
-        onClick={onDelete}
-        className={`text-white/30 hover:text-red-400 transition-all ${
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete()
+        }}
+        className={`shrink-0 text-white/30 hover:text-red-400 transition-all ${
           showDelete ? 'opacity-100' : 'opacity-0'
         }`}
       >

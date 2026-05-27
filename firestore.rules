@@ -55,13 +55,9 @@ service cloud.firestore {
 
       // User todos - with validation (v0.1.4 schema)
       match /todos/{todoId} {
-        // Optional-field validators. Each returns true when the field is
-        // absent OR when present with the expected type/values.
-        function validTodoStatus() {
-          return !request.resource.data.keys().hasAny(['status'])
-            || (request.resource.data.status is string
-                && request.resource.data.status in ['todo', 'doing', 'done']);
-        }
+        // Optional-field validators for v0.1.4 Notion-sync metadata. Each
+        // returns true when the field is absent OR when present with the
+        // expected type.
         function validDueDate() {
           return !request.resource.data.keys().hasAny(['dueDate'])
             || request.resource.data.dueDate is string;
@@ -82,27 +78,25 @@ service cloud.firestore {
         allow read: if isOwner(userId);
         allow delete: if isOwner(userId);
 
-        // Create: text/listId/completed still required; new optional fields
-        // validated only if present.
+        // Create: text/listId/completed still required; optional Notion
+        // metadata validated only if present.
         allow create: if isOwner(userId)
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 100
           && request.resource.data.listId is string
           && request.resource.data.completed is bool
-          && validTodoStatus()
           && validDueDate()
           && validIcon()
           && validNotionPageId()
           && validLastSyncedAt();
 
         // Update: text and listId stay immutable; completed remains bool;
-        // status/dueDate/icon/notionPageId/lastSyncedAt may change.
+        // optional Notion metadata may change.
         allow update: if isOwner(userId)
           && request.resource.data.text == resource.data.text
           && request.resource.data.listId == resource.data.listId
           && request.resource.data.completed is bool
-          && validTodoStatus()
           && validDueDate()
           && validIcon()
           && validNotionPageId()

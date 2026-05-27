@@ -21,6 +21,7 @@ export interface WallpaperData {
 
 const CACHE_KEY = 'horizon_all_wallpapers'
 const CURRENT_WALLPAPER_KEY = 'horizon_current_wallpaper'
+const NEXT_WALLPAPER_KEY = 'horizon_next_wallpaper'
 const CURRENT_WALLPAPER_MAX_AGE = 60 * 60 * 1000 // 1 hour — auto-rotate after this
 
 interface CachedWallpapers {
@@ -102,8 +103,10 @@ export async function getAllWallpapers(): Promise<WallpaperData[]> {
   return fetchAllWallpapers()
 }
 
-// Get a random wallpaper from all categories
-export async function getRandomWallpaper(): Promise<WallpaperData | null> {
+// Get a random wallpaper from all categories. If excludeUnsplashId is given,
+// avoid returning that one (so consecutive rotations / preloads always pick a
+// different image). Falls back to the full pool when filtering would empty it.
+export async function getRandomWallpaper(excludeUnsplashId?: string): Promise<WallpaperData | null> {
   const wallpapers = await getAllWallpapers()
 
   if (wallpapers.length === 0) {
@@ -111,9 +114,14 @@ export async function getRandomWallpaper(): Promise<WallpaperData | null> {
     return null
   }
 
-  const randomIndex = Math.floor(Math.random() * wallpapers.length)
-  console.log(`Random wallpaper: ${randomIndex + 1}/${wallpapers.length}`)
-  return wallpapers[randomIndex]
+  let pool = wallpapers
+  if (excludeUnsplashId) {
+    const filtered = wallpapers.filter((w) => w.unsplashId !== excludeUnsplashId)
+    if (filtered.length > 0) pool = filtered
+  }
+
+  const randomIndex = Math.floor(Math.random() * pool.length)
+  return pool[randomIndex]
 }
 
 // Get wallpaper count
@@ -165,6 +173,8 @@ export function setCurrentWallpaper(wallpaper: WallpaperData): void {
 // Get current wallpaper, or pick a new random one if missing/stale.
 // Stale = saved more than CURRENT_WALLPAPER_MAX_AGE ago. Within the freshness
 // window every new tab reuses the same wallpaper (multi-tab consistency).
+// When rotating, prefer the preloaded next wallpaper if one was prepared by a
+// previous tab session — its image is already in the browser HTTP cache.
 export async function getOrSetCurrentWallpaper(): Promise<WallpaperData | null> {
   const current = getCurrentWallpaper()
   const age = getCurrentWallpaperAge()
@@ -174,12 +184,50 @@ export async function getOrSetCurrentWallpaper(): Promise<WallpaperData | null> 
     return current
   }
 
+  const preloaded = getPreloadedNextWallpaper()
+  if (preloaded) {
+    console.log('Rotating to preloaded next wallpaper (cache-warm)')
+    clearPreloadedNextWallpaper()
+    setCurrentWallpaper(preloaded)
+    return preloaded
+  }
+
   console.log(current ? 'Current wallpaper expired, rotating' : 'No current wallpaper, getting random')
-  const random = await getRandomWallpaper()
+  const random = await getRandomWallpaper(current?.unsplashId)
   if (random) {
     setCurrentWallpaper(random)
   }
   return random
+}
+
+// ============ Preloaded Next Wallpaper ============
+// Persisted across tabs so a tab that opens after rotation can pick up the
+// wallpaper that a previous tab already warmed into the browser HTTP cache.
+
+export function getPreloadedNextWallpaper(): WallpaperData | null {
+  try {
+    const cached = localStorage.getItem(NEXT_WALLPAPER_KEY)
+    if (!cached) return null
+    return JSON.parse(cached) as WallpaperData
+  } catch {
+    return null
+  }
+}
+
+export function savePreloadedNextWallpaper(wallpaper: WallpaperData): void {
+  try {
+    localStorage.setItem(NEXT_WALLPAPER_KEY, JSON.stringify(wallpaper))
+  } catch (error) {
+    console.error('Failed to save preloaded next wallpaper:', error)
+  }
+}
+
+export function clearPreloadedNextWallpaper(): void {
+  try {
+    localStorage.removeItem(NEXT_WALLPAPER_KEY)
+  } catch {
+    // ignore
+  }
 }
 
 // Convert wallpaper URL to thumbnail (for settings panel, favorites grid, etc.)

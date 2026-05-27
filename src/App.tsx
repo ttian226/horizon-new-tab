@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Settings, RefreshCw, User, ListTodo, Heart, Maximize2, Minimize2 } from 'lucide-react'
 import { signInWithGoogle, signOut, onAuthChange } from './services/auth'
-import { getRandomWallpaper, getOrSetCurrentWallpaper, setCurrentWallpaper, WallpaperData } from './services/wallpaper'
+import {
+  getRandomWallpaper,
+  getOrSetCurrentWallpaper,
+  setCurrentWallpaper,
+  getPreloadedNextWallpaper,
+  savePreloadedNextWallpaper,
+  clearPreloadedNextWallpaper,
+  WallpaperData,
+} from './services/wallpaper'
 import {
   getNickname,
   setNickname,
@@ -117,6 +125,10 @@ function App() {
   const [isWorkMode, setIsWorkMode] = useState(loadWorkMode)
   const [activeWidgets, setActiveWidgets] = useState<WidgetId[]>(loadActiveWidgets)
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false)
+  // Crossfade state: previous wallpaper layer is mounted on top of the new
+  // one and fades from opacity 1 → 0 over 700ms when a swap happens.
+  const [previousWallpaper, setPreviousWallpaper] = useState<WallpaperData | null>(null)
+  const [previousVisible, setPreviousVisible] = useState(false)
 
   const handleWeatherChange = useCallback((description: string) => {
     setWeatherDescription(description)
@@ -142,6 +154,24 @@ function App() {
     }
     loadWallpaper()
   }, [])
+
+  // After the current wallpaper is on screen, prepare the next one so future
+  // rotations or "next" clicks render instantly. We persist the choice across
+  // tabs (so the next tab opened after the 1h expiry uses the same prepared
+  // wallpaper) AND warm the browser HTTP cache by triggering an Image load.
+  useEffect(() => {
+    if (!wallpaper?.unsplashId) return
+    let cancelled = false
+    getRandomWallpaper(wallpaper.unsplashId).then((next) => {
+      if (cancelled || !next) return
+      savePreloadedNextWallpaper(next)
+      const img = new Image()
+      img.src = next.imageUrl
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [wallpaper?.unsplashId])
 
   // Auth state listener
   useEffect(() => {
@@ -226,14 +256,45 @@ function App() {
     }
   }
 
+  // Decode an image URL into the browser cache; resolves whether or not the
+  // load succeeds (we don't want a bad URL to block the UI).
+  const preloadImage = useCallback((url: string): Promise<void> => {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => resolve()
+      img.onerror = () => resolve()
+      img.src = url
+    })
+  }, [])
+
+  // Swap wallpaper with a 700ms crossfade. The current wallpaper becomes the
+  // "previous" layer (rendered on top at opacity 1 → 0); the new wallpaper is
+  // placed underneath. We preload the new image first so the underneath layer
+  // is ready when the fade-out reveals it — no black flash.
+  const swapWallpaperWithCrossfade = useCallback(
+    async (next: WallpaperData) => {
+      await preloadImage(next.imageUrl)
+      setPreviousWallpaper(wallpaper)
+      setPreviousVisible(true)
+      setWallpaper(next)
+      setCurrentWallpaper(next)
+      requestAnimationFrame(() => setPreviousVisible(false))
+      window.setTimeout(() => setPreviousWallpaper(null), 800)
+    },
+    [wallpaper, preloadImage]
+  )
+
   const handleNextWallpaper = async () => {
     setChangingWallpaper(true)
     try {
-      const next = await getRandomWallpaper()
+      let next = getPreloadedNextWallpaper()
       if (next) {
-        setWallpaper(next)
-        // Save as current wallpaper for persistence across tabs
-        setCurrentWallpaper(next)
+        clearPreloadedNextWallpaper()
+      } else {
+        next = await getRandomWallpaper(wallpaper?.unsplashId)
+      }
+      if (next) {
+        await swapWallpaperWithCrossfade(next)
       }
     } catch (error) {
       console.error('Failed to get next wallpaper:', error)
@@ -344,22 +405,30 @@ function App() {
     }
   }
 
-  // Handle setting wallpaper (from favorites or other sources)
-  // Also save to localStorage for persistence across tabs
-  const handleSetWallpaper = (wallpaper: WallpaperData) => {
-    setWallpaper(wallpaper)
-    setCurrentWallpaper(wallpaper)
+  // Set wallpaper (from favorites / settings). Uses crossfade so the change
+  // feels intentional rather than a hard cut. setCurrentWallpaper persists.
+  const handleSetWallpaper = (next: WallpaperData) => {
+    swapWallpaperWithCrossfade(next)
   }
 
   return (
     <div className="relative w-full h-screen overflow-hidden text-white font-sans-display selection:bg-white/30">
-      {/* Background Image */}
+      {/* Background Image (current — bottom layer, no opacity transition) */}
       {wallpaper && (
         <div
           className={`absolute inset-0 bg-cover bg-center transition-all duration-700 ${
             isWorkMode ? 'blur-md brightness-75 scale-105' : ''
           }`}
           style={{ backgroundImage: `url(${wallpaper.imageUrl})` }}
+        />
+      )}
+      {/* Previous wallpaper (top layer, fades out for crossfade) */}
+      {previousWallpaper && (
+        <div
+          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ${
+            previousVisible ? 'opacity-100' : 'opacity-0'
+          } ${isWorkMode ? 'blur-md brightness-75 scale-105' : ''}`}
+          style={{ backgroundImage: `url(${previousWallpaper.imageUrl})` }}
         />
       )}
 

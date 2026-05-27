@@ -32,6 +32,11 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
+# Service account credentials — NEVER commit
+*-firebase-adminsdk-*.json
+.gcp/
+serviceAccount*.json
+
 # AI notes and prompts (exclude from git)
 .ai-notes/
 

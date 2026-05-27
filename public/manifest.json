@@ -17,7 +17,8 @@
     "https://firestore.googleapis.com/*",
     "https://*.firebaseapp.com/*",
     "https://*.googleapis.com/*",
-    "https://*.cloudfunctions.net/*"
+    "https://*.cloudfunctions.net/*",
+    "https://api.notion.com/*"
   ],
   "oauth2": {
     "client_id": "1021420058440-rkut76at70achk9qbqvle2g2sdh5rsr7.apps.googleusercontent.com",

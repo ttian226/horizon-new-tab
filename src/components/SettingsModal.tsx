@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react'
-import { X, Settings, Heart, User, MapPin, Search, Trash2, Clock } from 'lucide-react'
+import { X, Settings, Heart, User, MapPin, Search, Trash2, Clock, Database } from 'lucide-react'
 import { User as FirebaseUser } from 'firebase/auth'
 import { subscribeFavorites, removeFavorite, FavoriteWallpaper, updateWeatherSettings, updateClockFormat, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
 import { WallpaperData, getThumbnailUrl } from '../services/wallpaper'
+import {
+  loadConfig as loadNotionConfig,
+  saveConfig as saveNotionConfig,
+  clearConfig as clearNotionConfig,
+  testConnection as testNotionConnection,
+} from '../services/notion'
 import { ClockFormat } from './Clock'
 
-type TabType = 'general' | 'favorites' | 'account'
+type TabType = 'general' | 'favorites' | 'account' | 'notion'
+
+const DEFAULT_NOTION_DATABASE_ID = '3566867df3d38158b85cc538bedf18a1'
 
 interface WeatherSettings {
   isAuto: boolean
@@ -83,6 +91,12 @@ export default function SettingsModal({
   const [weatherSettings, setWeatherSettings] = useState<WeatherSettings>(loadWeatherSettings)
   const [searchQuery, setSearchQuery] = useState('')
   const [searching, setSearching] = useState(false)
+  // Notion tab state
+  const [notionToken, setNotionToken] = useState('')
+  const [notionDatabaseId, setNotionDatabaseId] = useState(DEFAULT_NOTION_DATABASE_ID)
+  const [notionStatus, setNotionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
+  const [notionMessage, setNotionMessage] = useState('')
+  const [notionConfigured, setNotionConfigured] = useState(false)
 
   // Subscribe to favorites when user is logged in and modal is open
   useEffect(() => {
@@ -102,6 +116,61 @@ export default function SettingsModal({
       setWeatherSettings(loadWeatherSettings())
     }
   }, [isOpen])
+
+  // Load existing Notion config on modal open
+  useEffect(() => {
+    if (!isOpen) return
+    loadNotionConfig().then((config) => {
+      if (config) {
+        setNotionToken(config.token)
+        setNotionDatabaseId(config.databaseId)
+        setNotionConfigured(true)
+        setNotionStatus('success')
+        setNotionMessage('Connected')
+      } else {
+        setNotionToken('')
+        setNotionDatabaseId(DEFAULT_NOTION_DATABASE_ID)
+        setNotionConfigured(false)
+        setNotionStatus('idle')
+        setNotionMessage('')
+      }
+    })
+  }, [isOpen])
+
+  const handleNotionTest = async () => {
+    if (!notionToken || !notionDatabaseId) {
+      setNotionStatus('error')
+      setNotionMessage('Both token and database ID are required')
+      return
+    }
+    setNotionStatus('testing')
+    setNotionMessage('')
+    const result = await testNotionConnection({ token: notionToken, databaseId: notionDatabaseId })
+    if (result.ok) {
+      setNotionStatus('success')
+      setNotionMessage(`Connection OK${result.taskCount !== undefined ? ` — ${result.taskCount} task${result.taskCount === 1 ? '' : 's'} fetched` : ''}`)
+    } else {
+      setNotionStatus('error')
+      setNotionMessage(result.error || 'Connection failed')
+    }
+  }
+
+  const handleNotionSave = async () => {
+    if (!notionToken || !notionDatabaseId) return
+    await saveNotionConfig({ token: notionToken, databaseId: notionDatabaseId })
+    setNotionConfigured(true)
+    setNotionStatus('success')
+    setNotionMessage('Saved')
+  }
+
+  const handleNotionDisconnect = async () => {
+    await clearNotionConfig()
+    setNotionToken('')
+    setNotionDatabaseId(DEFAULT_NOTION_DATABASE_ID)
+    setNotionConfigured(false)
+    setNotionStatus('idle')
+    setNotionMessage('')
+  }
 
   const handleToggleAuto = () => {
     const newSettings = { ...weatherSettings, isAuto: !weatherSettings.isAuto }
@@ -207,6 +276,7 @@ export default function SettingsModal({
   const tabs: { id: TabType; icon: typeof Settings; label: string }[] = [
     { id: 'general', icon: Settings, label: 'General' },
     { id: 'favorites', icon: Heart, label: 'Favorites' },
+    { id: 'notion', icon: Database, label: 'Notion' },
     { id: 'account', icon: User, label: 'Account' },
   ]
 
@@ -238,6 +308,7 @@ export default function SettingsModal({
             <h3 className="text-lg font-medium text-white">
               {activeTab === 'general' && 'General'}
               {activeTab === 'favorites' && 'Favorites'}
+              {activeTab === 'notion' && 'Notion'}
               {activeTab === 'account' && 'Account'}
             </h3>
             <button
@@ -369,6 +440,83 @@ export default function SettingsModal({
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Notion Tab */}
+            {activeTab === 'notion' && (
+              <div className="space-y-4">
+                <p className="text-xs text-white/40 leading-relaxed">
+                  Pull tasks from your Notion database into the Todo widget. Token is stored locally on this device only — it is never synced to Firestore.
+                </p>
+
+                {/* Token */}
+                <div>
+                  <label className="text-[10px] text-white/40 uppercase tracking-wider mb-1.5 block">
+                    Integration Token
+                  </label>
+                  <input
+                    type="password"
+                    value={notionToken}
+                    onChange={(e) => setNotionToken(e.target.value)}
+                    placeholder="ntn_..."
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 outline-none focus:border-white/30 transition-colors"
+                  />
+                </div>
+
+                {/* Database ID */}
+                <div>
+                  <label className="text-[10px] text-white/40 uppercase tracking-wider mb-1.5 block">
+                    Database ID
+                  </label>
+                  <input
+                    type="text"
+                    value={notionDatabaseId}
+                    onChange={(e) => setNotionDatabaseId(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white font-mono placeholder-white/20 outline-none focus:border-white/30 transition-colors"
+                  />
+                </div>
+
+                {/* Status / message */}
+                {notionMessage && (
+                  <div
+                    className={`text-xs ${
+                      notionStatus === 'success'
+                        ? 'text-emerald-400'
+                        : notionStatus === 'error'
+                          ? 'text-red-400'
+                          : 'text-white/60'
+                    }`}
+                  >
+                    {notionStatus === 'testing' ? 'Testing…' : notionMessage}
+                  </div>
+                )}
+
+                {/* Action row */}
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    onClick={handleNotionTest}
+                    disabled={notionStatus === 'testing' || !notionToken || !notionDatabaseId}
+                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs text-white/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {notionStatus === 'testing' ? 'Testing…' : 'Test'}
+                  </button>
+                  <button
+                    onClick={handleNotionSave}
+                    disabled={!notionToken || !notionDatabaseId}
+                    className="px-3 py-1.5 bg-emerald-600/80 hover:bg-emerald-500 rounded-lg text-xs text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Save
+                  </button>
+                  {notionConfigured && (
+                    <button
+                      onClick={handleNotionDisconnect}
+                      className="ml-auto text-xs text-white/40 hover:text-red-400 transition-colors"
+                    >
+                      Disconnect
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 

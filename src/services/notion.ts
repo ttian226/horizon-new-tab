@@ -199,9 +199,74 @@ export async function fetchTasks(
   return data.results.map(pageToTask)
 }
 
+// ============ Write paths (M2) ============
+
+/** Toggle the Status property of a Notion page between Done and Not done. */
+export async function updateTaskStatus(
+  config: NotionConfig,
+  pageId: string,
+  completed: boolean
+): Promise<void> {
+  const response = await fetch(`${API_BASE}/pages/${pageId}`, {
+    method: 'PATCH',
+    headers: buildHeaders(config.token),
+    body: JSON.stringify({
+      properties: {
+        Status: {
+          status: { name: completed ? 'Done' : 'Not done' },
+        },
+      },
+    }),
+  })
+  if (!response.ok) {
+    const err = (await response.json().catch(() => null)) as NotionErrorResponse | null
+    throw new Error(err?.message || `Notion API error: HTTP ${response.status}`)
+  }
+}
+
+function todayISO(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** Create a new task page in the configured database. Status defaults to
+ *  "Not done"; Due date defaults to today (matches SyncTask iOS behaviour
+ *  so tasks created from either client land in the same "today" bucket). */
+export async function createTask(
+  config: NotionConfig,
+  text: string
+): Promise<NotionTask> {
+  const response = await fetch(`${API_BASE}/pages`, {
+    method: 'POST',
+    headers: buildHeaders(config.token),
+    body: JSON.stringify({
+      parent: { database_id: config.databaseId },
+      properties: {
+        Name: {
+          title: [{ text: { content: text } }],
+        },
+        Status: {
+          status: { name: 'Not done' },
+        },
+        'Due date': {
+          date: { start: todayISO() },
+        },
+      },
+    }),
+  })
+  if (!response.ok) {
+    const err = (await response.json().catch(() => null)) as NotionErrorResponse | null
+    throw new Error(err?.message || `Notion API error: HTTP ${response.status}`)
+  }
+  const page = (await response.json()) as NotionPage
+  return pageToTask(page)
+}
+
+// ============ Adapter ============
+
 // Adapter: shape a NotionTask into CloudTodoItem so the UI renders both
 // sources through a single component path. The Notion page URL is kept on
-// the item so the click handler can jump to Notion (read-only in M1).
+// the item so the click handler can jump to Notion when explicitly asked.
 export function notionTaskToTodoItem(task: NotionTask): CloudTodoItem & { notionUrl: string } {
   const editedAt = new Date(task.lastEditedTime)
   return {

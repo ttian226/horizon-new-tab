@@ -8,6 +8,8 @@ import {
 import {
   loadConfig as loadNotionConfig,
   fetchTasks as fetchNotionTasks,
+  updateTaskStatus as updateNotionTaskStatus,
+  createTask as createNotionTask,
   notionTaskToTodoItem,
   type NotionConfig,
 } from '../services/notion'
@@ -32,6 +34,11 @@ export interface UseTodosResult {
   localListId: string
   /** Manually trigger a Notion refetch (no-op outside Notion mode). */
   refreshNotion: () => void
+  /** Toggle done state for a Notion-sourced todo. No-op in local mode (the
+   *  component should call toggleTodo from firestore.ts directly there). */
+  setNotionTaskDone: (todoId: string, completed: boolean) => Promise<void>
+  /** Add a new task into the configured Notion database. */
+  addNotionTask: (text: string) => Promise<void>
 }
 
 /**
@@ -141,6 +148,65 @@ export function useTodosWithNotion(userId: string | undefined): UseTodosResult {
       })
   }, [config])
 
+  // Toggle done with optimistic update + rollback on Notion API failure.
+  // Caller passes the new value (true = mark done).
+  const setNotionTaskDone = useCallback(
+    async (todoId: string, completed: boolean) => {
+      if (!config) return
+      // Snapshot for rollback
+      const prev = todos
+      setTodos((curr) => curr.map((t) => (t.id === todoId ? { ...t, completed } : t)))
+      try {
+        await updateNotionTaskStatus(config, todoId, completed)
+      } catch (e) {
+        // Roll back to pre-toggle state
+        setTodos(prev)
+        setNotionError(e instanceof Error ? e.message : 'Notion update failed')
+        throw e
+      }
+    },
+    [config, todos]
+  )
+
+  // Add a new task to Notion. Optimistic placeholder inserted at top until
+  // the real page is returned; on failure the placeholder is removed.
+  // Due date defaults to today to match SyncTask iOS — the createTask call
+  // sets it on Notion's side, and we mirror that here so the "Today" label
+  // shows immediately in the UI without waiting for the refetch.
+  const addNotionTask = useCallback(
+    async (text: string) => {
+      if (!config) return
+      const tempId = `notion-temp-${Date.now()}`
+      const now = new Date()
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      const placeholder: CloudTodoItem = {
+        id: tempId,
+        text,
+        completed: false,
+        listId: 'notion',
+        notionPageId: tempId,
+        dueDate: today,
+        lastSyncedAt: Date.now(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      setTodos((curr) => [placeholder, ...curr])
+      try {
+        const created = await createNotionTask(config, text)
+        const realItem = notionTaskToTodoItem(created)
+        notionUrlMapRef.current.set(created.pageId, created.url)
+        // Replace placeholder with the real page
+        setTodos((curr) => curr.map((t) => (t.id === tempId ? realItem : t)))
+        setNotionError(null)
+      } catch (e) {
+        setTodos((curr) => curr.filter((t) => t.id !== tempId))
+        setNotionError(e instanceof Error ? e.message : 'Notion create failed')
+        throw e
+      }
+    },
+    [config]
+  )
+
   return {
     todos,
     isLoading,
@@ -150,5 +216,7 @@ export function useTodosWithNotion(userId: string | undefined): UseTodosResult {
     notionUrlFor,
     localListId,
     refreshNotion,
+    setNotionTaskDone,
+    addNotionTask,
   }
 }

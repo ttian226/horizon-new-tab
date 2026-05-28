@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ListTodo, Plus, Trash2 } from 'lucide-react'
+import { ListTodo, Plus, Trash2, ExternalLink } from 'lucide-react'
 import GlassCard from './GlassCard'
 import {
   CloudTodoItem,
@@ -28,6 +28,8 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
     notionError,
     notionUrlFor,
     localListId,
+    setNotionTaskDone,
+    addNotionTask,
   } = useTodosWithNotion(userId)
 
   const [newTodoText, setNewTodoText] = useState('')
@@ -42,8 +44,19 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
 
   const handleAddTodo = async () => {
     const text = newTodoText.trim()
-    if (!text || mergedTodos.length >= MAX_TODO_COUNT || !localListId) return
+    if (!text || mergedTodos.length >= MAX_TODO_COUNT) return
 
+    if (isNotionMode) {
+      setNewTodoText('')
+      try {
+        await addNotionTask(text.slice(0, MAX_TODO_TEXT_LENGTH))
+      } catch (error) {
+        console.error('Failed to add Notion task:', error)
+      }
+      return
+    }
+
+    if (!localListId) return
     const placeholder: CloudTodoItem = {
       id: `temp-${Date.now()}`,
       text: text.slice(0, MAX_TODO_TEXT_LENGTH),
@@ -52,7 +65,6 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
       createdAt: new Date(),
       updatedAt: new Date(),
     }
-
     setOptimistic((prev) => [placeholder, ...prev])
     setNewTodoText('')
 
@@ -61,7 +73,6 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
     } catch (error) {
       console.error('Failed to add todo:', error)
     } finally {
-      // Drop the optimistic entry — real list arrives via subscribeTodos.
       setOptimistic((prev) => prev.filter((t) => t.id !== placeholder.id))
     }
   }
@@ -95,15 +106,24 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
     if (e.key === 'Enter') handleAddTodo()
   }
 
-  // Per-row click: Notion mode opens the Notion page in a new tab; local
-  // mode toggles done.
-  const handleRowClick = (todo: CloudTodoItem) => {
+  // Per-row click: both modes toggle done. Notion mode pushes via API
+  // (hook does optimistic update + rollback on failure). The hover
+  // ExternalLink button is how users still jump to the Notion page.
+  const handleRowClick = async (todo: CloudTodoItem) => {
     if (isNotionMode) {
-      const url = notionUrlFor(todo.id)
-      if (url) window.open(url, '_blank', 'noopener,noreferrer')
+      try {
+        await setNotionTaskDone(todo.id, !todo.completed)
+      } catch (error) {
+        console.error('Failed to toggle Notion task:', error)
+      }
       return
     }
     handleToggleTodo(todo.id, todo.completed)
+  }
+
+  const handleOpenInNotion = (todoId: string) => {
+    const url = notionUrlFor(todoId)
+    if (url) window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -150,6 +170,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
                 isNotionMode={isNotionMode}
                 onClick={() => handleRowClick(todo)}
                 onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
+                onOpenInNotion={isNotionMode ? () => handleOpenInNotion(todo.id) : undefined}
               />
             ))}
             {completedTodos.length > 0 && incompleteTodos.length > 0 && (
@@ -162,6 +183,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
                 isNotionMode={isNotionMode}
                 onClick={() => handleRowClick(todo)}
                 onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
+                onOpenInNotion={isNotionMode ? () => handleOpenInNotion(todo.id) : undefined}
               />
             ))}
           </div>
@@ -180,35 +202,27 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
         </div>
       )}
 
-      {/* Input — local mode only. Notion mode shows a hint instead. */}
-      {!isNotionMode ? (
-        <div className="-mx-4 px-4 pt-3 mt-auto border-t border-white/5 flex-shrink-0">
-          {mergedTodos.length >= MAX_TODO_COUNT ? (
-            <div className="text-center text-xs text-white/30 py-1">
-              Limit reached ({MAX_TODO_COUNT} tasks)
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-              <Plus size={16} className="text-white/40" />
-              <input
-                type="text"
-                value={newTodoText}
-                onChange={(e) => setNewTodoText(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Add a task..."
-                maxLength={MAX_TODO_TEXT_LENGTH}
-                className="flex-1 bg-transparent text-sm text-white placeholder-white/30 outline-none"
-              />
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="-mx-4 px-4 pt-3 mt-auto border-t border-white/5 flex-shrink-0">
-          <p className="text-[11px] text-white/30 text-center py-1">
-            Add and edit tasks in Notion
-          </p>
-        </div>
-      )}
+      {/* Input — same UI in both modes; placeholder hints destination. */}
+      <div className="-mx-4 px-4 pt-3 mt-auto border-t border-white/5 flex-shrink-0">
+        {mergedTodos.length >= MAX_TODO_COUNT ? (
+          <div className="text-center text-xs text-white/30 py-1">
+            Limit reached ({MAX_TODO_COUNT} tasks)
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
+            <Plus size={16} className="text-white/40" />
+            <input
+              type="text"
+              value={newTodoText}
+              onChange={(e) => setNewTodoText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isNotionMode ? 'Add a task to Notion…' : 'Add a task...'}
+              maxLength={MAX_TODO_TEXT_LENGTH}
+              className="flex-1 bg-transparent text-sm text-white placeholder-white/30 outline-none"
+            />
+          </div>
+        )}
+      </div>
     </GlassCard>
   )
 }
@@ -218,19 +232,20 @@ interface TodoItemProps {
   isNotionMode: boolean
   onClick: () => void
   onDelete?: () => void
+  onOpenInNotion?: () => void
 }
 
-function TodoItem({ todo, isNotionMode, onClick, onDelete }: TodoItemProps) {
-  const [showDelete, setShowDelete] = useState(false)
+function TodoItem({ todo, isNotionMode, onClick, onDelete, onOpenInNotion }: TodoItemProps) {
+  const [isHover, setIsHover] = useState(false)
   const due = todo.dueDate ? formatDueDate(todo.dueDate) : null
 
   return (
     <div
       className="group relative flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
-      onMouseEnter={() => setShowDelete(true)}
-      onMouseLeave={() => setShowDelete(false)}
+      onMouseEnter={() => setIsHover(true)}
+      onMouseLeave={() => setIsHover(false)}
       onClick={onClick}
-      title={isNotionMode ? 'Open in Notion' : undefined}
+      title={isNotionMode ? 'Click to toggle done' : undefined}
     >
       {todo.icon && (
         <span className="shrink-0 text-base leading-none" aria-hidden>
@@ -256,19 +271,32 @@ function TodoItem({ todo, isNotionMode, onClick, onDelete }: TodoItemProps) {
         </span>
       )}
 
-      {onDelete && (
+      {onOpenInNotion ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onOpenInNotion()
+          }}
+          title="Open in Notion"
+          className={`shrink-0 text-white/30 hover:text-white/80 transition-all ${
+            isHover ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <ExternalLink size={12} />
+        </button>
+      ) : onDelete ? (
         <button
           onClick={(e) => {
             e.stopPropagation()
             onDelete()
           }}
           className={`shrink-0 text-white/30 hover:text-red-400 transition-all ${
-            showDelete ? 'opacity-100' : 'opacity-0'
+            isHover ? 'opacity-100' : 'opacity-0'
           }`}
         >
           <Trash2 size={12} />
         </button>
-      )}
+      ) : null}
     </div>
   )
 }

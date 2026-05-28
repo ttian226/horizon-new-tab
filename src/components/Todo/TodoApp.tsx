@@ -76,7 +76,12 @@ function TodoAppBody({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isPinned, onToggle])
 
-  const mergedTodos = isNotionMode ? todos : [...optimistic, ...todos]
+  // Drop optimistic placeholders once the real Firestore doc (matched by text)
+  // has arrived, so a freshly added task doesn't render twice during the gap
+  // between the snapshot echo and the write confirmation that clears `optimistic`.
+  const realTexts = new Set(todos.map((t) => t.text))
+  const pendingOptimistic = optimistic.filter((t) => !realTexts.has(t.text))
+  const mergedTodos = isNotionMode ? todos : [...pendingOptimistic, ...todos]
   const incompleteTodos = mergedTodos.filter((t) => !t.completed)
   const completedTodos = mergedTodos.filter((t) => t.completed)
 
@@ -172,7 +177,7 @@ function TodoAppBody({
       ref={panelRef}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`absolute bottom-14 left-0 w-[400px] max-h-[500px] bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content transition-opacity duration-300 ${
+      className={`font-task absolute bottom-14 left-0 w-[400px] max-h-[500px] bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal-content transition-opacity duration-300 ${
         isPinned && !isHovered ? 'opacity-60' : 'opacity-100'
       }`}
     >

@@ -39,7 +39,12 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
   // in local (non-Notion) mode.
   const [optimistic, setOptimistic] = useState<CloudTodoItem[]>([])
 
-  const mergedTodos = isNotionMode ? todos : [...optimistic, ...todos]
+  // Drop optimistic placeholders once the real Firestore doc (matched by text)
+  // has arrived, so a freshly added task doesn't render twice during the gap
+  // between the snapshot echo and the write confirmation that clears `optimistic`.
+  const realTexts = new Set(todos.map((t) => t.text))
+  const pendingOptimistic = optimistic.filter((t) => !realTexts.has(t.text))
+  const mergedTodos = isNotionMode ? todos : [...pendingOptimistic, ...todos]
   const incompleteTodos = mergedTodos.filter((t) => !t.completed)
   const completedTodos = mergedTodos.filter((t) => t.completed)
 
@@ -135,6 +140,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
       onClose={onClose}
       defaultWidth={320}
       defaultHeight={380}
+      className="font-task"
     >
       {/* Source badge — shown only when Notion is the data source */}
       {isNotionMode && (

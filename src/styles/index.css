@@ -8,7 +8,7 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-color: #0a0a0a;
   color: #ffffff;
   opacity: 0;
@@ -21,15 +21,23 @@ body {
 
 /* ============ Custom Font Classes ============ */
 .font-sans-display {
-  font-family: 'Inter', 'Noto Sans SC', sans-serif;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
 }
 
 .font-clock {
-  font-family: 'Montserrat', 'Noto Sans SC', sans-serif;
+  font-family: 'Montserrat', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
 }
 
 .font-weather {
   font-family: 'Noto Serif', Georgia, 'Times New Roman', serif;
+}
+
+/* Task panel — terminal-style pairing: JetBrains Mono (Latin) + PingFang (CJK).
+   JetBrains Mono ships as a webfont so every user sees the same glyphs (we
+   intentionally avoid the local Nerd Font variant, whose metrics differ).
+   JetBrains Mono has no CJK glyphs, so Chinese falls through to PingFang. */
+.font-task {
+  font-family: 'JetBrains Mono', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', monospace;
 }
 
 /* ============ Glass Button Shimmer ============ */

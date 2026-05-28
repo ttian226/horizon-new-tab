@@ -15,3 +15,17 @@ export async function setLocal<T>(key: string, value: T): Promise<void> {
 export async function removeLocal(key: string): Promise<void> {
   await chrome.storage.local.remove(key)
 }
+
+// Subscribe to changes of a single key in chrome.storage.local. Fires in
+// every extension context (including the one that wrote), so a settings save
+// can live-update an open new-tab page. Returns an unsubscribe function.
+export function onLocalChange(key: string, callback: () => void): () => void {
+  const listener = (
+    changes: { [k: string]: chrome.storage.StorageChange },
+    areaName: string
+  ) => {
+    if (areaName === 'local' && key in changes) callback()
+  }
+  chrome.storage.onChanged.addListener(listener)
+  return () => chrome.storage.onChanged.removeListener(listener)
+}

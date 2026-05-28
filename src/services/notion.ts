@@ -9,16 +9,40 @@
 // notion-tasks skill): Name (title) / Status (status) / Due date (date)
 // + page-level icon emoji.
 
-import { getLocal, setLocal, removeLocal } from './extensionStorage'
+import { getLocal, setLocal, removeLocal, onLocalChange } from './extensionStorage'
 import type { CloudTodoItem } from './firestore'
 
 const CONFIG_KEY = 'horizon_notion_config'
 const API_BASE = 'https://api.notion.com/v1'
 const API_VERSION = '2022-06-28'
 
+// User-tunable view, mirroring the approachable layer of SyncTask's "View"
+// sheet (Shown-in-list toggles + Sort) — not its advanced filter builder.
+// Only the two axes our DB exposes (Status + Due date) are configurable.
+export interface NotionViewSettings {
+  /** Show "Done" tasks (with strikethrough) vs. hide them. */
+  showCompleted: boolean
+  /** Show tasks whose Due date is before today. Undated tasks always show. */
+  showOverdue: boolean
+  /** Render the due-date label on each row (display-only, client-side). */
+  showDates: boolean
+  sortBy: 'due' | 'edited' | 'created'
+  sortOrder: 'asc' | 'desc'
+}
+
+export const DEFAULT_VIEW_SETTINGS: NotionViewSettings = {
+  showCompleted: true,
+  showOverdue: true,
+  showDates: true,
+  sortBy: 'due',
+  sortOrder: 'asc',
+}
+
 export interface NotionConfig {
   token: string
   databaseId: string
+  /** Absent on configs saved before v0.1.4 — callers fall back to defaults. */
+  view?: NotionViewSettings
 }
 
 // 2-state model aligned with SyncTask and the actual Notion Tasks DB:
@@ -55,6 +79,12 @@ export async function saveConfig(config: NotionConfig): Promise<void> {
 
 export async function clearConfig(): Promise<void> {
   await removeLocal(CONFIG_KEY)
+}
+
+/** Fire `cb` whenever the saved config changes (e.g. Settings save/disconnect
+ *  or a view-toggle), so an open new-tab page can re-fetch live. */
+export function onConfigChange(cb: () => void): () => void {
+  return onLocalChange(CONFIG_KEY, cb)
 }
 
 // ============ API calls ============
@@ -159,30 +189,61 @@ export async function testConnection(config: NotionConfig): Promise<ConnectionTe
 }
 
 export interface FetchTasksOptions {
-  /** When true, omit "Done" tasks from result. Default false. */
-  excludeDone?: boolean
   /** Hard cap on results returned. Default 100 (one page). */
   limit?: number
 }
 
-/** Fetch tasks from the configured Notion database. */
+function buildSorts(view: NotionViewSettings) {
+  const direction = view.sortOrder === 'asc' ? 'ascending' : 'descending'
+  switch (view.sortBy) {
+    case 'due':
+      return [{ property: 'Due date', direction }]
+    case 'created':
+      return [{ timestamp: 'created_time', direction }]
+    case 'edited':
+    default:
+      return [{ timestamp: 'last_edited_time', direction }]
+  }
+}
+
+// Compose the Notion query filter from the view toggles. Done server-side so
+// the page-size cap applies to the *filtered* set (we don't waste the 50-row
+// budget on tasks that get dropped client-side).
+function buildFilter(view: NotionViewSettings): Record<string, unknown> | undefined {
+  const and: Record<string, unknown>[] = []
+  if (!view.showCompleted) {
+    and.push({ property: 'Status', status: { does_not_equal: 'Done' } })
+  }
+  if (!view.showOverdue) {
+    // Keep today/future AND undated (undated isn't "overdue"); drop only past.
+    and.push({
+      or: [
+        { property: 'Due date', date: { on_or_after: todayISO() } },
+        { property: 'Due date', date: { is_empty: true } },
+      ],
+    })
+  }
+  if (and.length === 0) return undefined
+  if (and.length === 1) return and[0]
+  return { and }
+}
+
+/** Fetch tasks from the configured Notion database, applying the saved view's
+ *  filter + sort (defaults when the config predates v0.1.4). */
 export async function fetchTasks(
   config: NotionConfig,
   options: FetchTasksOptions = {}
 ): Promise<NotionTask[]> {
-  const { excludeDone = false, limit = 100 } = options
+  const { limit = 100 } = options
+  const view = config.view ?? DEFAULT_VIEW_SETTINGS
 
   const body: Record<string, unknown> = {
     page_size: Math.min(limit, 100),
-    sorts: [{ timestamp: 'last_edited_time', direction: 'descending' }],
+    sorts: buildSorts(view),
   }
 
-  if (excludeDone) {
-    body.filter = {
-      property: 'Status',
-      status: { does_not_equal: 'Done' },
-    }
-  }
+  const filter = buildFilter(view)
+  if (filter) body.filter = filter
 
   const response = await fetch(`${API_BASE}/databases/${config.databaseId}/query`, {
     method: 'POST',

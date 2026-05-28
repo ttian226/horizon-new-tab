@@ -7,11 +7,14 @@ import {
 } from '../services/firestore'
 import {
   loadConfig as loadNotionConfig,
+  onConfigChange as onNotionConfigChange,
   fetchTasks as fetchNotionTasks,
   updateTaskStatus as updateNotionTaskStatus,
   createTask as createNotionTask,
   notionTaskToTodoItem,
+  DEFAULT_VIEW_SETTINGS,
   type NotionConfig,
+  type NotionViewSettings,
 } from '../services/notion'
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
@@ -39,6 +42,9 @@ export interface UseTodosResult {
   setNotionTaskDone: (todoId: string, completed: boolean) => Promise<void>
   /** Add a new task into the configured Notion database. */
   addNotionTask: (text: string) => Promise<void>
+  /** Resolved view settings (defaults outside Notion mode). The UI reads
+   *  `showDates` from here; filter/sort are already applied at fetch time. */
+  viewSettings: NotionViewSettings
 }
 
 /**
@@ -64,9 +70,14 @@ export function useTodosWithNotion(userId: string | undefined): UseTodosResult {
   const [localListId, setLocalListId] = useState('')
   const notionUrlMapRef = useRef<Map<string, string>>(new Map())
 
-  // 1. Load Notion config on mount.
+  // 1. Load Notion config on mount, and re-load whenever Settings changes it
+  //    (save / disconnect / view-toggle) so the open page updates live.
   useEffect(() => {
     loadNotionConfig().then((c) => setConfig(c))
+    const unsub = onNotionConfigChange(() => {
+      loadNotionConfig().then((c) => setConfig(c))
+    })
+    return unsub
   }, [])
 
   // 2. Notion path — fetch + poll + refresh on tab focus.
@@ -218,5 +229,6 @@ export function useTodosWithNotion(userId: string | undefined): UseTodosResult {
     refreshNotion,
     setNotionTaskDone,
     addNotionTask,
+    viewSettings: config?.view ?? DEFAULT_VIEW_SETTINGS,
   }
 }

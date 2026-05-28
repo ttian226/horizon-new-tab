@@ -30,6 +30,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
     localListId,
     setNotionTaskDone,
     addNotionTask,
+    viewSettings,
   } = useTodosWithNotion(userId)
 
   const [newTodoText, setNewTodoText] = useState('')
@@ -168,6 +169,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
                 key={todo.id}
                 todo={todo}
                 isNotionMode={isNotionMode}
+                showDates={viewSettings.showDates}
                 onClick={() => handleRowClick(todo)}
                 onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
                 onOpenInNotion={isNotionMode ? () => handleOpenInNotion(todo.id) : undefined}
@@ -181,6 +183,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
                 key={todo.id}
                 todo={todo}
                 isNotionMode={isNotionMode}
+                showDates={viewSettings.showDates}
                 onClick={() => handleRowClick(todo)}
                 onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
                 onOpenInNotion={isNotionMode ? () => handleOpenInNotion(todo.id) : undefined}
@@ -230,14 +233,15 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
 interface TodoItemProps {
   todo: CloudTodoItem
   isNotionMode: boolean
+  showDates: boolean
   onClick: () => void
   onDelete?: () => void
   onOpenInNotion?: () => void
 }
 
-function TodoItem({ todo, isNotionMode, onClick, onDelete, onOpenInNotion }: TodoItemProps) {
+function TodoItem({ todo, isNotionMode, showDates, onClick, onDelete, onOpenInNotion }: TodoItemProps) {
   const [isHover, setIsHover] = useState(false)
-  const due = todo.dueDate ? formatDueDate(todo.dueDate) : null
+  const due = showDates && todo.dueDate ? formatDueDate(todo.dueDate) : null
 
   return (
     <div

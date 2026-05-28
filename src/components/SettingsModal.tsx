@@ -8,6 +8,8 @@ import {
   saveConfig as saveNotionConfig,
   clearConfig as clearNotionConfig,
   testConnection as testNotionConnection,
+  DEFAULT_VIEW_SETTINGS,
+  type NotionViewSettings,
 } from '../services/notion'
 import { ClockFormat } from './Clock'
 
@@ -98,6 +100,7 @@ export default function SettingsModal({
   const [notionMessage, setNotionMessage] = useState('')
   const [notionConfigured, setNotionConfigured] = useState(false)
   const [showNotionHelp, setShowNotionHelp] = useState(false)
+  const [notionView, setNotionView] = useState<NotionViewSettings>(DEFAULT_VIEW_SETTINGS)
 
   // Subscribe to favorites when user is logged in and modal is open
   useEffect(() => {
@@ -125,12 +128,14 @@ export default function SettingsModal({
       if (config) {
         setNotionToken(config.token)
         setNotionDatabaseId(config.databaseId)
+        setNotionView(config.view ?? DEFAULT_VIEW_SETTINGS)
         setNotionConfigured(true)
         setNotionStatus('success')
         setNotionMessage('Connected')
       } else {
         setNotionToken('')
         setNotionDatabaseId(DEFAULT_NOTION_DATABASE_ID)
+        setNotionView(DEFAULT_VIEW_SETTINGS)
         setNotionConfigured(false)
         setNotionStatus('idle')
         setNotionMessage('')
@@ -158,7 +163,7 @@ export default function SettingsModal({
 
   const handleNotionSave = async () => {
     if (!notionToken || !notionDatabaseId) return
-    await saveNotionConfig({ token: notionToken, databaseId: notionDatabaseId })
+    await saveNotionConfig({ token: notionToken, databaseId: notionDatabaseId, view: notionView })
     setNotionConfigured(true)
     setNotionStatus('success')
     setNotionMessage('Saved')
@@ -168,9 +173,22 @@ export default function SettingsModal({
     await clearNotionConfig()
     setNotionToken('')
     setNotionDatabaseId(DEFAULT_NOTION_DATABASE_ID)
+    setNotionView(DEFAULT_VIEW_SETTINGS)
     setNotionConfigured(false)
     setNotionStatus('idle')
     setNotionMessage('')
+  }
+
+  // View toggles persist immediately once connected (no re-Save needed) — the
+  // open new-tab page picks the change up via onConfigChange and re-fetches.
+  const updateNotionView = (patch: Partial<NotionViewSettings>) => {
+    const next = { ...notionView, ...patch }
+    setNotionView(next)
+    if (notionConfigured && notionToken && notionDatabaseId) {
+      saveNotionConfig({ token: notionToken, databaseId: notionDatabaseId, view: next }).catch(
+        (err) => console.error('Failed to save Notion view settings:', err)
+      )
+    }
   }
 
   const handleToggleAuto = () => {
@@ -547,6 +565,52 @@ export default function SettingsModal({
                     </button>
                   )}
                 </div>
+
+                {/* View — filter + sort, only meaningful once connected */}
+                {notionConfigured && (
+                  <div className="pt-3 mt-1 border-t border-white/10 space-y-3">
+                    <div className="text-[10px] text-white/40 uppercase tracking-wider">View</div>
+                    <ToggleRow
+                      label="Show completed tasks"
+                      checked={notionView.showCompleted}
+                      onChange={(v) => updateNotionView({ showCompleted: v })}
+                    />
+                    <ToggleRow
+                      label="Show overdue tasks"
+                      checked={notionView.showOverdue}
+                      onChange={(v) => updateNotionView({ showOverdue: v })}
+                    />
+                    <ToggleRow
+                      label="Show due dates"
+                      checked={notionView.showDates}
+                      onChange={(v) => updateNotionView({ showDates: v })}
+                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white/70 flex-1">Sort by</span>
+                      <select
+                        value={notionView.sortBy}
+                        onChange={(e) =>
+                          updateNotionView({ sortBy: e.target.value as NotionViewSettings['sortBy'] })
+                        }
+                        className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-white/30 [&>option]:text-black"
+                      >
+                        <option value="due">Due date</option>
+                        <option value="edited">Last edited</option>
+                        <option value="created">Created</option>
+                      </select>
+                      <select
+                        value={notionView.sortOrder}
+                        onChange={(e) =>
+                          updateNotionView({ sortOrder: e.target.value as NotionViewSettings['sortOrder'] })
+                        }
+                        className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-white/30 [&>option]:text-black"
+                      >
+                        <option value="asc">Asc</option>
+                        <option value="desc">Desc</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -618,6 +682,34 @@ export default function SettingsModal({
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function ToggleRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (value: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-white/70">{label}</span>
+      <button
+        onClick={() => onChange(!checked)}
+        className={`w-11 h-6 rounded-full transition-colors ${
+          checked ? 'bg-blue-500' : 'bg-white/20'
+        }`}
+      >
+        <div
+          className={`w-5 h-5 rounded-full bg-white transition-transform ${
+            checked ? 'translate-x-[22px]' : 'translate-x-[2px]'
+          }`}
+        />
+      </button>
     </div>
   )
 }

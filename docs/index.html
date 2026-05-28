@@ -93,7 +93,7 @@
         </div>
 
         <p class="text-sm text-white/40 mt-6 flex items-center justify-center gap-3 flex-wrap">
-          <a href="#whats-new" class="font-mono hover:text-amber-400 transition-colors">v0.1.3</a>
+          <a href="#whats-new" class="font-mono hover:text-amber-400 transition-colors">v0.1.4</a>
           <span class="text-white/20">·</span>
           <span>Free &amp; Open Source</span>
           <span class="text-white/20">·</span>
@@ -189,14 +189,16 @@
 
         <!-- 5. Todo List (Tall: 1x2) -->
         <div class="md:row-span-2 relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] transition-all duration-300 hover:bg-black/30 hover:scale-[1.01] hover:border-white/20 p-6 flex flex-col">
-          <div class="flex items-center gap-3 mb-6">
+          <div class="flex items-center gap-3 mb-2">
             <div class="p-2 bg-emerald-500/20 rounded-lg text-emerald-400">
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
               </svg>
             </div>
             <h3 class="text-xl font-bold text-white">Todo List</h3>
+            <span class="ml-auto px-2 py-0.5 text-[10px] font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 rounded-full">Notion sync</span>
           </div>
+          <div class="mb-5 text-[11px] text-white/40">Synced from Notion · just now</div>
           <div class="flex-1 space-y-3">
             <div class="flex items-center gap-3 p-3 rounded-lg bg-white/5 border-transparent opacity-50">
               <div class="w-4 h-4 rounded border flex items-center justify-center bg-emerald-500 border-emerald-500">
@@ -328,27 +330,50 @@
       </div>
 
       <div class="space-y-6">
-        <!-- v0.1.3 (Latest) -->
+        <!-- v0.1.4 (Latest) -->
         <div class="relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-amber-500/30 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] p-8">
           <div class="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
           <div class="relative">
             <div class="flex flex-wrap items-center gap-3 mb-4">
-              <span class="px-3 py-1 text-xs font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-full font-mono">v0.1.3</span>
+              <span class="px-3 py-1 text-xs font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 rounded-full font-mono">v0.1.4</span>
               <span class="text-white/40 text-sm">May 2026</span>
               <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200 bg-amber-500/20 border border-amber-500/30 rounded">Latest</span>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-4">Hourly wallpaper rotation</h3>
+            <h3 class="text-2xl font-bold text-white mb-4">Sync your tasks with Notion</h3>
             <ul class="space-y-3 text-white/70">
               <li class="flex gap-3">
                 <span class="text-amber-400 mt-1.5 shrink-0">→</span>
-                <span>Wallpapers now refresh automatically when a new tab is opened more than an hour later. Tabs opened within the same hour still share one image for a calm experience.</span>
+                <span>Connect your Notion database in Settings to view, complete, and add tasks right from your new tab — changes sync straight back to Notion. Not a Notion user? Your local to-dos work exactly as before.</span>
               </li>
               <li class="flex gap-3">
                 <span class="text-amber-400 mt-1.5 shrink-0">→</span>
-                <span>A new in-app "What's New" modal greets returning users after each version, so improvements don't go unnoticed.</span>
+                <span>Filter and sort your task list — show or hide completed and overdue tasks, and order by due date — to match the view you want.</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="text-amber-400 mt-1.5 shrink-0">→</span>
+                <span>Smoother wallpaper transitions that cross-fade instead of flashing black, plus a refreshed task panel where a single click marks a task done.</span>
               </li>
             </ul>
           </div>
+        </div>
+
+        <!-- v0.1.3 -->
+        <div class="relative overflow-hidden rounded-3xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] p-8">
+          <div class="flex flex-wrap items-center gap-3 mb-4">
+            <span class="px-3 py-1 text-xs font-semibold text-white/70 bg-white/5 border border-white/10 rounded-full font-mono">v0.1.3</span>
+            <span class="text-white/40 text-sm">May 2026</span>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-4">Hourly wallpaper rotation</h3>
+          <ul class="space-y-2 text-white/60 text-sm">
+            <li class="flex gap-3">
+              <span class="text-white/30 mt-1 shrink-0">→</span>
+              <span>Wallpapers now refresh automatically when a new tab is opened more than an hour later. Tabs opened within the same hour still share one image for a calm experience.</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="text-white/30 mt-1 shrink-0">→</span>
+              <span>A new in-app "What's New" modal greets returning users after each version, so improvements don't go unnoticed.</span>
+            </li>
+          </ul>
         </div>
 
         <!-- v0.1.2 -->
@@ -439,7 +464,7 @@
         </div>
         <div id="caption-1" class="carousel-caption absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 transform opacity-0 translate-y-4 pointer-events-none">
           <h3 class="text-3xl font-bold text-white mb-2">Stay Productive</h3>
-          <p class="text-white/60 text-lg">Manage your tasks with a clean, intuitive todo list synced across devices.</p>
+          <p class="text-white/60 text-lg">Manage tasks in a clean, click-to-complete list — or connect Notion to sync them straight from your new tab.</p>
         </div>
         <div id="caption-2" class="carousel-caption absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 transform opacity-0 translate-y-4 pointer-events-none">
           <h3 class="text-3xl font-bold text-white mb-2">Focus Mode</h3>

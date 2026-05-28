@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Settings, Heart, User, MapPin, Search, Trash2, Clock, Database } from 'lucide-react'
+import { X, Settings, Heart, User, MapPin, Search, Trash2, Clock, Database, Info } from 'lucide-react'
 import { User as FirebaseUser } from 'firebase/auth'
 import { subscribeFavorites, removeFavorite, FavoriteWallpaper, updateWeatherSettings, updateClockFormat, type WeatherSettings as FirestoreWeatherSettings } from '../services/firestore'
 import { WallpaperData, getThumbnailUrl } from '../services/wallpaper'
@@ -97,6 +97,7 @@ export default function SettingsModal({
   const [notionStatus, setNotionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle')
   const [notionMessage, setNotionMessage] = useState('')
   const [notionConfigured, setNotionConfigured] = useState(false)
+  const [showNotionHelp, setShowNotionHelp] = useState(false)
 
   // Subscribe to favorites when user is logged in and modal is open
   useEffect(() => {
@@ -446,9 +447,38 @@ export default function SettingsModal({
             {/* Notion Tab */}
             {activeTab === 'notion' && (
               <div className="space-y-4">
-                <p className="text-xs text-white/40 leading-relaxed">
-                  Pull tasks from your Notion database into the Todo widget. Token is stored locally on this device only — it is never synced to Firestore.
-                </p>
+                <div className="flex items-start gap-2">
+                  <p className="flex-1 text-xs text-white/40 leading-relaxed">
+                    Pull tasks from your Notion database into the Todo widget. Token is stored locally on this device only — it is never synced to Firestore.
+                  </p>
+                  <button
+                    onClick={() => setShowNotionHelp((v) => !v)}
+                    className={`shrink-0 mt-0.5 transition-colors ${
+                      showNotionHelp ? 'text-white/80' : 'text-white/40 hover:text-white/70'
+                    }`}
+                    title="How to set up"
+                  >
+                    <Info size={15} />
+                  </button>
+                </div>
+
+                {showNotionHelp && (
+                  <div className="bg-white/[0.03] border border-white/10 rounded-lg p-3 space-y-2 text-[11px] text-white/55 leading-relaxed">
+                    <p className="text-white/70 font-medium">How to connect Notion</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Create an integration at <span className="text-white/75">notion.so/my-integrations</span> (type: Internal). Copy its token — starts with <span className="font-mono text-white/75">ntn_</span>.</li>
+                      <li>Open your Tasks database in Notion → <span className="text-white/75">•••</span> → <span className="text-white/75">Connections</span> → add your integration.</li>
+                      <li>Database ID = the 32-character string in the DB's URL, before <span className="font-mono text-white/75">?v=</span>.</li>
+                      <li>Paste both above → <span className="text-white/75">Test</span> → <span className="text-white/75">Save</span>.</li>
+                    </ol>
+                    <p className="pt-1 border-t border-white/5">
+                      <span className="text-white/70">Required columns:</span> Name (title), Status (with "Not done" / "Done"), Due date (date).
+                    </p>
+                    <p className="text-white/40">
+                      One-click Notion login (OAuth) is planned for a future version — for now this manual setup is needed.
+                    </p>
+                  </div>
+                )}
 
                 {/* Token */}
                 <div>

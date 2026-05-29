@@ -87,17 +87,12 @@ export default function GlassCard({
     if (!initialized && cardRef.current) {
       const savedPos = loadPosition(id)
       if (!savedPos) {
-        // Set default position based on widget id
-        // todo: center-left, notes: center-right
-        // Widget width is ~320px, so offset by ~200px to avoid overlap
+        // Set default position based on widget id (todo: center-left)
         let offsetX = 0
         let offsetY = 0
 
         if (id === 'todo') {
           offsetX = -200  // Left of center
-          offsetY = 0
-        } else if (id === 'notes') {
-          offsetX = 200   // Right of center
           offsetY = 0
         } else {
           // Other widgets: slight random offset

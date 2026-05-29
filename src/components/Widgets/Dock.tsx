@@ -1,6 +1,6 @@
-import { ListTodo, StickyNote, Minimize2, LucideIcon } from 'lucide-react'
+import { ListTodo, Minimize2, LucideIcon } from 'lucide-react'
 
-type WidgetId = 'todo' | 'notes'
+type WidgetId = 'todo'
 
 interface DockProps {
   activeWidgets: WidgetId[]
@@ -16,8 +16,7 @@ interface DockItem {
 
 const dockItems: DockItem[] = [
   { id: 'todo', icon: ListTodo, label: 'Todo' },
-  { id: 'notes', icon: StickyNote, label: 'Notes' },
-  // Future: { id: 'pomodoro', icon: Timer, label: 'Pomodoro' },
+  // Future: sticky notes, { id: 'pomodoro', icon: Timer, label: 'Pomodoro' },
 ]
 
 export default function Dock({ activeWidgets, onToggleWidget, onExitFocusMode }: DockProps) {

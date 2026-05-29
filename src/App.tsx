@@ -27,7 +27,7 @@ import SettingsModal from './components/SettingsModal'
 import WhatsNewModal from './components/WhatsNewModal'
 import TodoApp from './components/Todo/TodoApp'
 import Toast from './components/Toast'
-import { NotesWidget, TodoWidget, Dock, WidgetId } from './components/Widgets'
+import { TodoWidget, Dock, WidgetId } from './components/Widgets'
 import { CURRENT_VERSION, SEEN_VERSION_KEY, CURRENT_RELEASE } from './config/releaseNotes'
 
 // localStorage keys
@@ -645,9 +645,6 @@ function App() {
                     userId={user.uid}
                     onClose={() => handleCloseWidget('todo')}
                   />
-                )}
-                {widgetId === 'notes' && (
-                  <NotesWidget onClose={() => handleCloseWidget('notes')} />
                 )}
               </div>
             ))}

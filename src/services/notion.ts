@@ -323,6 +323,63 @@ export async function createTask(
   return pageToTask(page)
 }
 
+// ============ Page body (note) — M1 read / M2 write ============
+
+interface RichTextSpan {
+  plain_text: string
+}
+
+interface NotionBlock {
+  id: string
+  type: string
+  paragraph?: { rich_text: RichTextSpan[] }
+  [key: string]: unknown
+}
+
+interface NotionBlocksResponse {
+  results: NotionBlock[]
+  has_more: boolean
+  next_cursor: string | null
+}
+
+export interface PageContent {
+  /** Plain text of the page body — paragraphs joined by newlines. */
+  text: string
+  /** True when the body is empty or only paragraph blocks, so the extension
+   *  can safely overwrite it (M2). Any rich block → read-only to avoid
+   *  clobbering images / lists / tables / toggles. */
+  editable: boolean
+}
+
+function blockText(block: NotionBlock): string {
+  if (block.type === 'paragraph') {
+    return (block.paragraph?.rich_text ?? []).map((t) => t.plain_text).join('')
+  }
+  // Other block types still carry rich_text we can show read-only.
+  const inner = block[block.type] as { rich_text?: RichTextSpan[] } | undefined
+  return (inner?.rich_text ?? []).map((t) => t.plain_text).join('')
+}
+
+/** Read a task page's body as plain text. `editable` is false when the body
+ *  holds anything other than paragraphs (so M2 won't rewrite it). */
+export async function fetchPageContent(
+  config: NotionConfig,
+  pageId: string
+): Promise<PageContent> {
+  const response = await fetch(`${API_BASE}/blocks/${pageId}/children?page_size=100`, {
+    method: 'GET',
+    headers: buildHeaders(config.token),
+  })
+  if (!response.ok) {
+    const err = (await response.json().catch(() => null)) as NotionErrorResponse | null
+    throw new Error(err?.message || `Notion API error: HTTP ${response.status}`)
+  }
+  const data = (await response.json()) as NotionBlocksResponse
+  const lines = data.results.map(blockText)
+  const editable = data.results.every((b) => b.type === 'paragraph')
+  return { text: lines.join('\n'), editable }
+}
+
 // ============ Adapter ============
 
 // Adapter: shape a NotionTask into CloudTodoItem so the UI renders both

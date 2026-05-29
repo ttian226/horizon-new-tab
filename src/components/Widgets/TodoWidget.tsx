@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ListTodo, Plus, Trash2, ExternalLink } from 'lucide-react'
+import { ListTodo, Plus, Trash2, ExternalLink, Pin } from 'lucide-react'
 import GlassCard from './GlassCard'
+import { pinTask } from '../../services/stickyNotes'
 import {
   CloudTodoItem,
   addTodo,
@@ -132,6 +133,12 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
     if (url) window.open(url, '_blank', 'noopener,noreferrer')
   }
 
+  // Pin a task to the work-mode sticky board (its note = the task's page body).
+  const handlePinTask = async (todo: CloudTodoItem) => {
+    const ok = await pinTask(todo.id, todo.text)
+    if (!ok) console.warn('Sticky note limit reached')
+  }
+
   return (
     <GlassCard
       id="todo"
@@ -179,6 +186,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
                 onClick={() => handleRowClick(todo)}
                 onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
                 onOpenInNotion={isNotionMode ? () => handleOpenInNotion(todo.id) : undefined}
+                onPin={isNotionMode ? () => handlePinTask(todo) : undefined}
               />
             ))}
             {completedTodos.length > 0 && incompleteTodos.length > 0 && (
@@ -193,6 +201,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
                 onClick={() => handleRowClick(todo)}
                 onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
                 onOpenInNotion={isNotionMode ? () => handleOpenInNotion(todo.id) : undefined}
+                onPin={isNotionMode ? () => handlePinTask(todo) : undefined}
               />
             ))}
           </div>
@@ -243,9 +252,10 @@ interface TodoItemProps {
   onClick: () => void
   onDelete?: () => void
   onOpenInNotion?: () => void
+  onPin?: () => void
 }
 
-function TodoItem({ todo, isNotionMode, showDates, onClick, onDelete, onOpenInNotion }: TodoItemProps) {
+function TodoItem({ todo, isNotionMode, showDates, onClick, onDelete, onOpenInNotion, onPin }: TodoItemProps) {
   const [isHover, setIsHover] = useState(false)
   const due = showDates && todo.dueDate ? formatDueDate(todo.dueDate) : null
 
@@ -281,32 +291,48 @@ function TodoItem({ todo, isNotionMode, showDates, onClick, onDelete, onOpenInNo
         </span>
       )}
 
-      {onOpenInNotion ? (
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onOpenInNotion()
-          }}
-          title="Open in Notion"
-          className={`shrink-0 text-white/30 hover:text-white/80 transition-all ${
-            isHover ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <ExternalLink size={12} />
-        </button>
-      ) : onDelete ? (
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onDelete()
-          }}
-          className={`shrink-0 text-white/30 hover:text-red-400 transition-all ${
-            isHover ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <Trash2 size={12} />
-        </button>
-      ) : null}
+      <div
+        className={`flex items-center gap-1.5 shrink-0 transition-all ${
+          isHover ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        {onPin && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onPin()
+            }}
+            title="Pin as sticky note"
+            className="text-white/30 hover:text-white/80 transition-colors"
+          >
+            <Pin size={12} />
+          </button>
+        )}
+        {onOpenInNotion && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenInNotion()
+            }}
+            title="Open in Notion"
+            className="text-white/30 hover:text-white/80 transition-colors"
+          >
+            <ExternalLink size={12} />
+          </button>
+        )}
+        {onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+            title="Delete"
+            className="text-white/30 hover:text-red-400 transition-colors"
+          >
+            <Trash2 size={12} />
+          </button>
+        )}
+      </div>
     </div>
   )
 }

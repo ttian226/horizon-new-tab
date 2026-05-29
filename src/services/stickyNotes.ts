@@ -22,6 +22,8 @@ export interface StickyNote {
   pageId: string // Notion task page id — the note source
   title: string // task name, cached for display
   icon?: string // task emoji, cached for display
+  dueDate?: string // ISO due date, cached for display
+  completed: boolean // task done state, cached; toggled from the sticky
   x: number // offset from canvas center (matches widget layout convention)
   y: number
   w: number
@@ -32,10 +34,19 @@ export interface StickyNote {
   pinned: boolean
 }
 
+/** The task fields cached on a sticky at pin time. */
+export interface PinnableTask {
+  pageId: string
+  title: string
+  icon?: string
+  dueDate?: string
+  completed: boolean
+}
+
 export async function loadStickies(): Promise<StickyNote[]> {
   const list = (await getLocal<StickyNote[]>(STICKY_KEY)) ?? []
-  // Normalize pre-`pinned` records to visible.
-  return list.map((s) => ({ ...s, pinned: s.pinned !== false }))
+  // Normalize records saved before these fields existed.
+  return list.map((s) => ({ ...s, pinned: s.pinned !== false, completed: s.completed ?? false }))
 }
 
 export async function saveStickies(list: StickyNote[]): Promise<void> {
@@ -49,27 +60,33 @@ export function onStickiesChange(cb: () => void): () => void {
 /** Pin a task. If it was pinned before, restore it (keep its last layout and
  *  color). No-op if already visible. Returns false when the visible cap is
  *  hit so the caller can warn the user. */
-export async function pinTask(pageId: string, title: string, icon?: string): Promise<boolean> {
+export async function pinTask(task: PinnableTask): Promise<boolean> {
   const list = await loadStickies()
-  const existing = list.find((s) => s.pageId === pageId)
+  const existing = list.find((s) => s.pageId === task.pageId)
   if (existing?.pinned) return true
 
   const visibleCount = list.filter((s) => s.pinned).length
   if (visibleCount >= MAX_STICKIES) return false
 
   if (existing) {
-    // Re-pin: restore remembered layout/color, refresh the cached title/icon.
+    // Re-pin: restore remembered layout/color, refresh the cached task fields.
     await saveStickies(
-      list.map((s) => (s.pageId === pageId ? { ...s, pinned: true, title, icon } : s))
+      list.map((s) =>
+        s.pageId === task.pageId
+          ? { ...s, pinned: true, title: task.title, icon: task.icon, dueDate: task.dueDate, completed: task.completed }
+          : s
+      )
     )
     return true
   }
 
   const i = visibleCount
   const note: StickyNote = {
-    pageId,
-    title,
-    icon,
+    pageId: task.pageId,
+    title: task.title,
+    icon: task.icon,
+    dueDate: task.dueDate,
+    completed: task.completed,
     x: (i % 3) * 56 - 56,
     y: Math.floor(i / 3) * 56 - 40,
     w: DEFAULT_W,
@@ -79,6 +96,12 @@ export async function pinTask(pageId: string, title: string, icon?: string): Pro
   }
   await saveStickies([...list, note])
   return true
+}
+
+/** Hide a sticky from the board (keeps its layout/color for next time). */
+export async function unpinTask(pageId: string): Promise<void> {
+  const list = await loadStickies()
+  await saveStickies(list.map((s) => (s.pageId === pageId ? { ...s, pinned: false } : s)))
 }
 
 export async function isPinned(pageId: string): Promise<boolean> {

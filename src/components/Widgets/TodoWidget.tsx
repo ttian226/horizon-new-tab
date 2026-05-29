@@ -1,7 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ListTodo, Plus, Trash2, ExternalLink, Pin } from 'lucide-react'
 import GlassCard from './GlassCard'
-import { pinTask } from '../../services/stickyNotes'
+import {
+  pinTask,
+  unpinTask,
+  loadStickies,
+  onStickiesChange,
+  type StickyColor,
+} from '../../services/stickyNotes'
 import {
   CloudTodoItem,
   addTodo,
@@ -14,6 +20,15 @@ import { useTodosWithNotion } from '../../hooks/useTodosWithNotion'
 
 const MAX_TODO_TEXT_LENGTH = 100
 const MAX_TODO_COUNT = 20
+
+// Pin-icon color per sticky color — links the list row to its board sticky.
+const PIN_COLOR: Record<StickyColor, string> = {
+  amber: 'text-amber-400',
+  rose: 'text-rose-400',
+  sky: 'text-sky-400',
+  violet: 'text-violet-400',
+  emerald: 'text-emerald-400',
+}
 
 interface TodoWidgetProps {
   userId: string
@@ -39,6 +54,17 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
   // separately so they merge with the hook's list without races. Only used
   // in local (non-Notion) mode.
   const [optimistic, setOptimistic] = useState<CloudTodoItem[]>([])
+  // Pinned page id → sticky color, to mirror pinned state (and color) in the list.
+  const [pinnedColors, setPinnedColors] = useState<Map<string, StickyColor>>(new Map())
+
+  useEffect(() => {
+    const refresh = () =>
+      loadStickies().then((list) =>
+        setPinnedColors(new Map(list.filter((s) => s.pinned).map((s) => [s.pageId, s.color])))
+      )
+    refresh()
+    return onStickiesChange(refresh)
+  }, [])
 
   // Drop optimistic placeholders once the real Firestore doc (matched by text)
   // has arrived, so a freshly added task doesn't render twice during the gap
@@ -133,9 +159,19 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
     if (url) window.open(url, '_blank', 'noopener,noreferrer')
   }
 
-  // Pin a task to the work-mode sticky board (its note = the task's page body).
-  const handlePinTask = async (todo: CloudTodoItem) => {
-    const ok = await pinTask(todo.id, todo.text, todo.icon)
+  // Toggle a task on the work-mode sticky board (its note = the task's page body).
+  const handleTogglePin = async (todo: CloudTodoItem) => {
+    if (pinnedColors.has(todo.id)) {
+      await unpinTask(todo.id)
+      return
+    }
+    const ok = await pinTask({
+      pageId: todo.id,
+      title: todo.text,
+      icon: todo.icon,
+      dueDate: todo.dueDate,
+      completed: todo.completed,
+    })
     if (!ok) console.warn('Sticky note limit reached')
   }
 
@@ -186,7 +222,9 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
                 onClick={() => handleRowClick(todo)}
                 onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
                 onOpenInNotion={isNotionMode ? () => handleOpenInNotion(todo.id) : undefined}
-                onPin={isNotionMode ? () => handlePinTask(todo) : undefined}
+                onPin={isNotionMode ? () => handleTogglePin(todo) : undefined}
+                isPinned={pinnedColors.has(todo.id)}
+                pinColor={pinnedColors.get(todo.id)}
               />
             ))}
             {completedTodos.length > 0 && incompleteTodos.length > 0 && (
@@ -201,7 +239,9 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
                 onClick={() => handleRowClick(todo)}
                 onDelete={isNotionMode ? undefined : () => handleDeleteTodo(todo.id)}
                 onOpenInNotion={isNotionMode ? () => handleOpenInNotion(todo.id) : undefined}
-                onPin={isNotionMode ? () => handlePinTask(todo) : undefined}
+                onPin={isNotionMode ? () => handleTogglePin(todo) : undefined}
+                isPinned={pinnedColors.has(todo.id)}
+                pinColor={pinnedColors.get(todo.id)}
               />
             ))}
           </div>
@@ -253,9 +293,11 @@ interface TodoItemProps {
   onDelete?: () => void
   onOpenInNotion?: () => void
   onPin?: () => void
+  isPinned?: boolean
+  pinColor?: StickyColor
 }
 
-function TodoItem({ todo, isNotionMode, showDates, onClick, onDelete, onOpenInNotion, onPin }: TodoItemProps) {
+function TodoItem({ todo, isNotionMode, showDates, onClick, onDelete, onOpenInNotion, onPin, isPinned, pinColor }: TodoItemProps) {
   const [isHover, setIsHover] = useState(false)
   const due = showDates && todo.dueDate ? formatDueDate(todo.dueDate) : null
 
@@ -291,21 +333,21 @@ function TodoItem({ todo, isNotionMode, showDates, onClick, onDelete, onOpenInNo
         </span>
       )}
 
-      <div
-        className={`flex items-center gap-1.5 shrink-0 transition-all ${
-          isHover ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
+      <div className="flex items-center gap-1.5 shrink-0">
         {onPin && (
           <button
             onClick={(e) => {
               e.stopPropagation()
               onPin()
             }}
-            title="Pin as sticky note"
-            className="text-white/30 hover:text-white/80 transition-colors"
+            title={isPinned ? 'Pinned · click to unpin' : 'Pin as sticky note'}
+            className={`transition-all ${
+              isPinned
+                ? `opacity-100 ${PIN_COLOR[pinColor ?? 'amber']}`
+                : `text-white/30 hover:text-white/70 ${isHover ? 'opacity-100' : 'opacity-0'}`
+            }`}
           >
-            <Pin size={12} />
+            <Pin size={12} className={isPinned ? 'fill-current' : ''} />
           </button>
         )}
         {onOpenInNotion && (
@@ -315,7 +357,9 @@ function TodoItem({ todo, isNotionMode, showDates, onClick, onDelete, onOpenInNo
               onOpenInNotion()
             }}
             title="Open in Notion"
-            className="text-white/30 hover:text-white/80 transition-colors"
+            className={`text-white/30 hover:text-white/80 transition-all ${
+              isHover ? 'opacity-100' : 'opacity-0'
+            }`}
           >
             <ExternalLink size={12} />
           </button>
@@ -327,7 +371,9 @@ function TodoItem({ todo, isNotionMode, showDates, onClick, onDelete, onOpenInNo
               onDelete()
             }}
             title="Delete"
-            className="text-white/30 hover:text-red-400 transition-colors"
+            className={`text-white/30 hover:text-red-400 transition-all ${
+              isHover ? 'opacity-100' : 'opacity-0'
+            }`}
           >
             <Trash2 size={12} />
           </button>

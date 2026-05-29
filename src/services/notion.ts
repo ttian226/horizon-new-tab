@@ -380,6 +380,55 @@ export async function fetchPageContent(
   return { text: lines.join('\n'), editable }
 }
 
+/** Overwrite a task page's body with plain-text paragraphs. Only safe when the
+ *  body is paragraphs-only — re-checked here, throwing otherwise, so rich
+ *  content (images / lists / tables / toggles) is never destroyed. */
+export async function updatePageContent(
+  config: NotionConfig,
+  pageId: string,
+  text: string
+): Promise<void> {
+  const headers = buildHeaders(config.token)
+  const readRes = await fetch(`${API_BASE}/blocks/${pageId}/children?page_size=100`, { headers })
+  if (!readRes.ok) {
+    const err = (await readRes.json().catch(() => null)) as NotionErrorResponse | null
+    throw new Error(err?.message || `Notion API error: HTTP ${readRes.status}`)
+  }
+  const data = (await readRes.json()) as NotionBlocksResponse
+  if (!data.results.every((b) => b.type === 'paragraph')) {
+    throw new Error('This note has rich content — edit it in Notion.')
+  }
+
+  // Remove the old paragraphs, then append the new text as paragraphs.
+  for (const b of data.results) {
+    const del = await fetch(`${API_BASE}/blocks/${b.id}`, { method: 'DELETE', headers })
+    if (!del.ok) {
+      const err = (await del.json().catch(() => null)) as NotionErrorResponse | null
+      throw new Error(err?.message || `Notion API error: HTTP ${del.status}`)
+    }
+  }
+
+  const children =
+    text === ''
+      ? []
+      : text.split('\n').map((line) => ({
+          object: 'block',
+          type: 'paragraph',
+          paragraph: { rich_text: line ? [{ type: 'text', text: { content: line } }] : [] },
+        }))
+  if (children.length === 0) return
+
+  const appendRes = await fetch(`${API_BASE}/blocks/${pageId}/children`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ children }),
+  })
+  if (!appendRes.ok) {
+    const err = (await appendRes.json().catch(() => null)) as NotionErrorResponse | null
+    throw new Error(err?.message || `Notion API error: HTTP ${appendRes.status}`)
+  }
+}
+
 // ============ Adapter ============
 
 // Adapter: shape a NotionTask into CloudTodoItem so the UI renders both

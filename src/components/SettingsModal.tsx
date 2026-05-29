@@ -15,7 +15,9 @@ import { ClockFormat } from './Clock'
 
 type TabType = 'general' | 'favorites' | 'account' | 'notion'
 
-const DEFAULT_NOTION_DATABASE_ID = '3566867df3d38158b85cc538bedf18a1'
+// Empty by default — each user pastes their own database ID. Never ship a
+// real (personal) database ID as the default.
+const DEFAULT_NOTION_DATABASE_ID = ''
 
 interface WeatherSettings {
   isAuto: boolean
@@ -521,6 +523,7 @@ export default function SettingsModal({
                     type="text"
                     value={notionDatabaseId}
                     onChange={(e) => setNotionDatabaseId(e.target.value)}
+                    placeholder="32-character ID from your database URL"
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white font-mono placeholder-white/20 outline-none focus:border-white/30 transition-colors"
                   />
                 </div>

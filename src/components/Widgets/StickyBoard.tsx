@@ -35,10 +35,11 @@ export default function StickyBoard() {
     return onStickiesChange(() => loadStickies().then(setStickies))
   }, [])
 
-  // Lazy-fetch each sticky's page body once.
+  // Lazy-fetch each visible sticky's page body once.
   useEffect(() => {
     if (!config) return
     for (const s of stickies) {
+      if (!s.pinned) continue
       if (fetchedRef.current.has(s.pageId)) continue
       fetchedRef.current.add(s.pageId)
       setBodies((b) => ({ ...b, [s.pageId]: { text: null, error: null } }))
@@ -72,20 +73,23 @@ export default function StickyBoard() {
     })
   }, [])
 
+  // Close = soft-hide. Keep layout/color so re-pinning restores the sticky;
+  // keep the fetched body cached for an instant re-open.
   const handleClose = useCallback((pageId: string) => {
-    fetchedRef.current.delete(pageId)
     setStickies((curr) => {
-      const next = curr.filter((s) => s.pageId !== pageId)
+      const next = curr.map((s) => (s.pageId === pageId ? { ...s, pinned: false } : s))
       saveStickies(next)
       return next
     })
   }, [])
 
-  if (!config || stickies.length === 0) return null
+  if (!config) return null
+  const visible = stickies.filter((s) => s.pinned)
+  if (visible.length === 0) return null
 
   return (
     <>
-      {stickies.map((s) => (
+      {visible.map((s) => (
         <StickyNote
           key={s.pageId}
           note={s}

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { X, GripHorizontal, ExternalLink } from 'lucide-react'
+import { X, ExternalLink } from 'lucide-react'
 import { STICKY_COLORS, type StickyColor, type StickyNote as StickyNoteData } from '../../services/stickyNotes'
 
 const MIN_W = 180
@@ -118,7 +118,7 @@ export default function StickyNote({
 
   return (
     <div
-      className={`fixed rounded-2xl backdrop-blur-xl border shadow-2xl overflow-hidden select-none flex flex-col ${COLOR_BG[note.color]} ${
+      className={`group fixed rounded-2xl backdrop-blur-xl border shadow-2xl overflow-hidden select-none flex flex-col ${COLOR_BG[note.color]} ${
         dragging || resizing ? 'cursor-grabbing' : ''
       }`}
       style={{
@@ -130,21 +130,14 @@ export default function StickyNote({
         zIndex: dragging || resizing ? 100 : 15,
       }}
     >
-      {/* Header — drag handle + title + actions */}
-      <div
-        className="flex items-center gap-1.5 px-3 py-2 cursor-grab active:cursor-grabbing"
-        onMouseDown={onDragStart}
-      >
-        <GripHorizontal size={13} className="text-white/30 shrink-0" />
-        <span className="flex-1 text-xs font-medium text-white/90 truncate" title={note.title}>
-          {note.title}
-        </span>
+      {/* Floating actions — fade in on hover, no header band */}
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
         {notionUrl && (
           <button
             onClick={() => window.open(notionUrl, '_blank', 'noopener,noreferrer')}
             onMouseDown={(e) => e.stopPropagation()}
             title="Open in Notion"
-            className="shrink-0 text-white/40 hover:text-white/80 transition-colors"
+            className="text-white/40 hover:text-white/80 transition-colors"
           >
             <ExternalLink size={12} />
           </button>
@@ -152,15 +145,33 @@ export default function StickyNote({
         <button
           onClick={() => onClose(note.pageId)}
           onMouseDown={(e) => e.stopPropagation()}
-          title="Unpin"
-          className="shrink-0 text-white/40 hover:text-white/80 transition-colors"
+          title="Unpin (kept for next time)"
+          className="text-white/40 hover:text-white/80 transition-colors"
         >
           <X size={13} />
         </button>
       </div>
 
-      {/* Body — read-only note text (M1) */}
-      <div className="flex-1 overflow-y-auto px-3 pb-2 text-[13px] leading-relaxed text-white/75 whitespace-pre-wrap break-words">
+      {/* Title — non-editable heading, doubles as the drag handle */}
+      <div
+        className="px-4 pt-3 pb-1.5 cursor-grab active:cursor-grabbing"
+        onMouseDown={onDragStart}
+      >
+        <h3
+          className="text-sm font-semibold text-white/90 leading-snug break-words line-clamp-2 pr-8"
+          title={note.title}
+        >
+          {note.icon && (
+            <span className="mr-1.5" aria-hidden>
+              {note.icon}
+            </span>
+          )}
+          {note.title}
+        </h3>
+      </div>
+
+      {/* Body — the note (task page body); read-only in M1 */}
+      <div className="flex-1 overflow-y-auto px-4 pb-2 text-[13px] leading-relaxed text-white/70 whitespace-pre-wrap break-words">
         {loadError ? (
           <span className="text-red-400">{loadError}</span>
         ) : body === null ? (
@@ -172,8 +183,8 @@ export default function StickyNote({
         )}
       </div>
 
-      {/* Footer — color dots */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 border-t border-white/5">
+      {/* Footer — color dot (balances the layout) */}
+      <div className="flex items-center gap-1.5 px-4 py-1.5">
         {showColors ? (
           STICKY_COLORS.map((c) => (
             <button
@@ -198,9 +209,12 @@ export default function StickyNote({
       </div>
 
       {/* Resize handle */}
-      <div className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize group" onMouseDown={onResizeStart}>
+      <div
+        className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize group/resize"
+        onMouseDown={onResizeStart}
+      >
         <svg
-          className="absolute bottom-1 right-1 text-white/20 group-hover:text-white/40 transition-colors"
+          className="absolute bottom-1 right-1 text-white/20 group-hover/resize:text-white/40 transition-colors"
           width="10"
           height="10"
           viewBox="0 0 12 12"

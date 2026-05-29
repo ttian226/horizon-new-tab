@@ -135,7 +135,7 @@ export default function TodoWidget({ userId, onClose }: TodoWidgetProps) {
 
   // Pin a task to the work-mode sticky board (its note = the task's page body).
   const handlePinTask = async (todo: CloudTodoItem) => {
-    const ok = await pinTask(todo.id, todo.text)
+    const ok = await pinTask(todo.id, todo.text, todo.icon)
     if (!ok) console.warn('Sticky note limit reached')
   }
 
